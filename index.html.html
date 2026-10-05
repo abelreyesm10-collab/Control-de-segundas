@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CAPEX - Sistema de Control de Merma y Transferencia SAE</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        capex: {
+                            DEFAULT: '#3B4B44',
+                            dark: '#2D3A35',
+                            light: '#4E6158',
+                            soft: '#EAEFEA'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @media print {
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+            body { background: white; font-size: 12pt; }
+        }
+        .print-only { display: none; }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans text-gray-800">
+
+    <!-- BARRA DE NAVEGACIÓN CORPORATIVA CAPEX -->
+    <nav class="bg-capex-dark text-white shadow-lg no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                
+                <!-- LOGO SVG INTEGRADO -->
+                <div class="flex items-center space-x-3 bg-white px-3 py-1.5 rounded-md">
+                    <svg class="h-8 w-auto text-capex-dark" viewBox="0 0 320 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="2" y="2" width="45" height="76" stroke="#3B4B44" stroke-width="3" fill="none"/>
+                        <path d="M12 10 Q 25 35 12 70" stroke="#3B4B44" stroke-width="2" fill="none"/>
+                        <path d="M22 10 Q 38 30 22 70" stroke="#3B4B44" stroke-width="2" fill="none"/>
+                        <path d="M32 10 Q 45 40 32 70" stroke="#3B4B44" stroke-width="2" fill="none"/>
+                        <text x="60" y="52" fill="#3B4B44" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="44" letter-spacing="2">CAPEX</text>
+                        <text x="62" y="70" fill="#4E6158" font-family="Arial, Helvetica, sans-serif" font-weight="bold" font-size="14" letter-spacing="0.5">Puertas de madera</text>
+                    </svg>
+                </div>
+                
+                <div class="flex space-x-2">
+                    <button onclick="cambiarPestana('dashboard-hojas')" id="btn-dashboard-hojas" class="px-3 py-2 rounded-md text-sm font-medium bg-capex text-white">
+                        <i class="fa-solid fa-layer-group mr-1"></i>Hojas de Segunda
+                    </button>
+                    <button onclick="cambiarPestana('dashboard-puertas')" id="btn-dashboard-puertas" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-capex-light">
+                        <i class="fa-solid fa-door-open mr-1"></i>Puertas de Segunda
+                    </button>
+                    <button onclick="cambiarPestana('nuevo-registro')" id="btn-nuevo-registro" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-capex-light">
+                        <i class="fa-solid fa-plus-circle mr-1"></i>Ingreso
+                    </button>
+                    <button onclick="cambiarPestana('nueva-salida')" id="btn-nueva-salida" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-capex-light">
+                        <i class="fa-solid fa-minus-circle mr-1"></i>Salida
+                    </button>
+                    <button onclick="cambiarPestana('historial')" id="btn-historial" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-capex-light">
+                        <i class="fa-solid fa-list mr-1"></i>Historial
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- AGREGADA CLASE no-print PARA EVITAR TRASLAPES EN IMPRESIÓN -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 no-print">
+
+        <!-- ==================== VISTA 1: DASHBOARD HOJAS DE SEGUNDA ==================== -->
+        <div id="vista-dashboard-hojas" class="space-y-6">
+            <div class="flex justify-between items-center border-b pb-3">
+                <div>
+                    <h1 class="text-2xl font-bold text-capex-dark">Control de Merma (Hojas de Segunda - Almacén 4)</h1>
+                    <p class="text-xs text-gray-500">Gestión de Inventario y Movimientos en Aspel SAE</p>
+                </div>
+                <span class="text-sm bg-capex-soft text-capex-dark font-semibold px-3 py-1 rounded-full border border-capex/20">CAPEX Puertas de Madera</span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="bg-white p-5 rounded-lg shadow border-l-4 border-capex">
+                    <div class="text-gray-500 text-sm font-semibold">Total Ingresado (Hojas)</div>
+                    <div class="text-2xl font-bold text-gray-800 mt-1" id="kpi-hojas-ingresado">0 Pzas</div>
+                </div>
+                <div class="bg-white p-5 rounded-lg shadow border-l-4 border-red-500">
+                    <div class="text-gray-500 text-sm font-semibold">Total Salidas (Hojas)</div>
+                    <div class="text-2xl font-bold text-red-600 mt-1" id="kpi-hojas-salidas">0 Pzas</div>
+                </div>
+                <div class="bg-white p-5 rounded-lg shadow border-l-4 border-emerald-600">
+                    <div class="text-gray-500 text-sm font-semibold">Stock Actual en Almacén 4</div>
+                    <div class="text-2xl font-bold text-emerald-800 mt-1" id="kpi-hojas-stock">0 Pzas</div>
+                </div>
+                <div class="bg-white p-5 rounded-lg shadow border-l-4 border-amber-500">
+                    <div class="text-gray-500 text-sm font-semibold">Recuperables Disponibles</div>
+                    <div class="text-2xl font-bold text-amber-600 mt-1" id="kpi-hojas-recuperables">0 Pzas</div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-white p-5 rounded-lg shadow border-t-2 border-capex">
+                    <h2 class="text-lg font-bold text-capex-dark mb-4 flex justify-between items-center">
+                        <span><i class="fa-solid fa-ruler-combined text-capex mr-2"></i>Stock de Hojas por Medida</span>
+                        <span class="text-xs bg-capex-soft text-capex px-2 py-1 rounded">Disponibles</span>
+                    </h2>
+                    <div class="overflow-y-auto max-h-72">
+                        <table class="w-full text-sm text-left text-gray-500">
+                            <thead class="text-xs text-gray-700 uppercase bg-gray-100 sticky top-0">
+                                <tr>
+                                    <th class="px-3 py-2">Medida</th>
+                                    <th class="px-3 py-2 text-center">Ingresos</th>
+                                    <th class="px-3 py-2 text-center">Salidas</th>
+                                    <th class="px-3 py-2 text-right">Stock Hojas</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabla-dashboard-medidas"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-lg shadow border-t-2 border-capex">
+                    <h2 class="text-lg font-bold text-capex-dark mb-4 flex justify-between items-center">
+                        <span><i class="fa-solid fa-barcode text-capex mr-2"></i>Stock por Clave (Almacén 4)</span>
+                        <span class="text-xs bg-capex-soft text-capex px-2 py-1 rounded">Disponibles</span>
+                    </h2>
+                    <div class="overflow-y-auto max-h-72">
+                        <table class="w-full text-sm text-left text-gray-500">
+                            <thead class="text-xs text-gray-700 uppercase bg-gray-100 sticky top-0">
+                                <tr>
+                                    <th class="px-3 py-2">Clave</th>
+                                    <th class="px-3 py-2 text-center">Ingresos</th>
+                                    <th class="px-3 py-2 text-center">Salidas</th>
+                                    <th class="px-3 py-2 text-right">Stock</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabla-dashboard-stock"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-lg shadow">
+                <h2 class="text-lg font-bold text-capex-dark mb-4"><i class="fa-solid fa-chart-pie text-capex mr-2"></i>Salidas de Hojas por Concepto</h2>
+                <div class="h-64 flex justify-center">
+                    <canvas id="graficoConceptoSalidas"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== VISTA 2: DASHBOARD PUERTAS DE SEGUNDA ==================== -->
+        <div id="vista-dashboard-puertas" class="hidden space-y-6">
+            <div class="flex justify-between items-center border-b pb-3">
+                <div>
+                    <h1 class="text-2xl font-bold text-capex-dark">Control de Puertas de Segunda (Almacén 4)</h1>
+                    <p class="text-xs text-gray-500">Inventario y Registro de Puertas Rehusables / Con Detalles</p>
+                </div>
+                <span class="text-sm bg-amber-100 text-amber-800 font-semibold px-3 py-1 rounded-full border border-amber-300">
+                    <i class="fa-solid fa-door-open mr-1"></i>Puertas Terminadas / Segunda
+                </span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="bg-white p-5 rounded-lg shadow border-l-4 border-capex">
+                    <div class="text-gray-500 text-sm font-semibold">Total Ingresado (Puertas)</div>
+                    <div class="text-2xl font-bold text-gray-800 mt-1" id="kpi-puertas-ingresado">0 Pzas</div>
+                </div>
+                <div class="bg-white p-5 rounded-lg shadow border-l-4 border-red-500">
+                    <div class="text-gray-500 text-sm font-semibold">Total Salidas (Puertas)</div>
+                    <div class="text-2xl font-bold text-red-600 mt-1" id="kpi-puertas-salidas">0 Pzas</div>
+                </div>
+                <div class="bg-white p-5 rounded-lg shadow border-l-4 border-emerald-600">
+                    <div class="text-gray-500 text-sm font-semibold">Stock Actual de Puertas</div>
+                    <div class="text-2xl font-bold text-emerald-800 mt-1" id="kpi-puertas-stock">0 Pzas</div>
+                </div>
+                <div class="bg-white p-5 rounded-lg shadow border-l-4 border-amber-500">
+                    <div class="text-gray-500 text-sm font-semibold">Aptas para Remate / Venta</div>
+                    <div class="text-2xl font-bold text-amber-600 mt-1" id="kpi-puertas-recuperables">0 Pzas</div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-white p-5 rounded-lg shadow border-t-2 border-amber-600">
+                    <h2 class="text-lg font-bold text-capex-dark mb-4 flex justify-between items-center">
+                        <span><i class="fa-solid fa-door-closed text-amber-600 mr-2"></i>Stock por Modelo</span>
+                        <span class="text-xs bg-amber-50 text-amber-800 px-2 py-1 rounded font-semibold">Inventario</span>
+                    </h2>
+                    <div class="overflow-y-auto max-h-72">
+                        <table class="w-full text-sm text-left text-gray-500">
+                            <thead class="text-xs text-gray-700 uppercase bg-gray-100 sticky top-0">
+                                <tr>
+                                    <th class="px-3 py-2">Modelo</th>
+                                    <th class="px-3 py-2 text-center">Ing.</th>
+                                    <th class="px-3 py-2 text-center">Sal.</th>
+                                    <th class="px-3 py-2 text-right">Stock</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabla-dashboard-puertas-modelo"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-lg shadow border-t-2 border-amber-600">
+                    <h2 class="text-lg font-bold text-capex-dark mb-4 flex justify-between items-center">
+                        <span><i class="fa-solid fa-ruler-combined text-amber-600 mr-2"></i>Stock por Medida Original</span>
+                        <span class="text-xs bg-amber-50 text-amber-800 px-2 py-1 rounded font-semibold">Medidas</span>
+                    </h2>
+                    <div class="overflow-y-auto max-h-72">
+                        <table class="w-full text-sm text-left text-gray-500">
+                            <thead class="text-xs text-gray-700 uppercase bg-gray-100 sticky top-0">
+                                <tr>
+                                    <th class="px-3 py-2">Medida</th>
+                                    <th class="px-3 py-2 text-center">Ing.</th>
+                                    <th class="px-3 py-2 text-center">Sal.</th>
+                                    <th class="px-3 py-2 text-right">Stock</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabla-dashboard-puertas-medida"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-lg shadow border-t-2 border-amber-600">
+                    <h2 class="text-lg font-bold text-capex-dark mb-4 flex justify-between items-center">
+                        <span><i class="fa-solid fa-barcode text-amber-600 mr-2"></i>Stock por Clave</span>
+                        <span class="text-xs bg-amber-50 text-amber-800 px-2 py-1 rounded font-semibold">Almacén 4</span>
+                    </h2>
+                    <div class="overflow-y-auto max-h-72">
+                        <table class="w-full text-sm text-left text-gray-500">
+                            <thead class="text-xs text-gray-700 uppercase bg-gray-100 sticky top-0">
+                                <tr>
+                                    <th class="px-3 py-2">Clave</th>
+                                    <th class="px-3 py-2 text-center">Ing.</th>
+                                    <th class="px-3 py-2 text-center">Sal.</th>
+                                    <th class="px-3 py-2 text-right">Stock</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabla-dashboard-puertas-clave"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-lg shadow">
+                <h2 class="text-lg font-bold text-capex-dark mb-4"><i class="fa-solid fa-chart-pie text-amber-600 mr-2"></i>Distribución de Salidas de Puertas por Concepto</h2>
+                <div class="h-64 flex justify-center">
+                    <canvas id="graficoPuertasSalidas"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== VISTA FORMULARIO DE INGRESO ==================== -->
+        <div id="vista-nuevo-registro" class="hidden">
+            <div class="max-w-3xl mx-auto bg-white p-8 rounded-lg shadow-md border-t-4 border-capex">
+                <h2 class="text-2xl font-bold mb-6 text-capex-dark border-b pb-2">
+                    <i class="fa-solid fa-arrow-right-to-bracket mr-2 text-capex"></i>Registrar Ingreso de Material
+                </h2>
+                
+                <form id="form-ingreso" onsubmit="guardarIngreso(event)" class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Categoría del Producto</label>
+                            <select id="categoria_producto" onchange="actualizarOpcionesClaves('ingreso')" class="w-full border rounded-md p-2 bg-white font-bold text-capex focus:ring-2 focus:ring-capex">
+                                <option value="Hoja">Hoja de Segunda</option>
+                                <option value="Puerta">Puerta de Segunda</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Fecha de Registro</label>
+                            <input type="date" id="fecha" required class="w-full border rounded-md p-2 focus:ring-2 focus:ring-capex">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Folio Ingreso (Consecutivo)</label>
+                            <input type="text" id="folio_sae" readonly class="w-full border rounded-md p-2 bg-gray-100 font-bold font-mono text-capex">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Clave del Producto</label>
+                            <select id="clave" onchange="autocompletarIngreso()" required class="w-full border rounded-md p-2 bg-white focus:ring-2 focus:ring-capex font-mono text-sm">
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Modelo</label>
+                            <input type="text" id="modelo" placeholder="Se llena automáticamente al elegir clave" required class="w-full border rounded-md p-2 focus:ring-2 focus:ring-capex">
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Descripción del Producto</label>
+                            <input type="text" id="descripcion" placeholder="Se llena automáticamente al elegir clave" required class="w-full border rounded-md p-2 focus:ring-2 focus:ring-capex">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Medida Original</label>
+                            <input type="text" id="medida" placeholder="Se llena automáticamente al elegir clave" required class="w-full border rounded-md p-2 focus:ring-2 focus:ring-capex">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Cantidad a Ingresar</label>
+                            <input type="number" id="cantidad" min="1" required class="w-full border rounded-md p-2 focus:ring-2 focus:ring-capex">
+                        </div>
+                    </div>
+
+                    <div class="border-t border-b py-4 my-2 bg-capex-soft p-4 rounded-md">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+                            <div>
+                                <label class="block text-sm font-bold text-capex-dark mb-1">¿Es Recuperable / Venta Segunda?</label>
+                                <select id="es_recuperable" onchange="evaluarRecuperable()" class="w-full border border-capex/30 rounded-md p-2 bg-white font-semibold focus:ring-2 focus:ring-capex">
+                                    <option value="No">No (Scrap / Desecho)</option>
+                                    <option value="Sí">Sí (Apta para Refilar, Reajuste o Remate)</option>
+                                </select>
+                            </div>
+                            
+                            <div id="contenedor-medida-ajustar" class="hidden">
+                                <label class="block text-sm font-bold text-capex-dark mb-1">¿A qué medida o estado se ajustará?</label>
+                                <input type="text" id="medida_ajustar" placeholder="Ej: 80x200 cm o Apto Remate" class="w-full border border-capex/40 rounded-md p-2 bg-white focus:ring-2 focus:ring-capex">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Autorizado por</label>
+                            <input type="text" id="autorizado_por" placeholder="Nombre del responsable" required class="w-full border rounded-md p-2 focus:ring-2 focus:ring-capex">
+                        </div>
+                    </div>
+
+                    <div class="pt-4 flex justify-end space-x-3">
+                        <button type="reset" onclick="evaluarRecuperable()" class="px-4 py-2 border rounded-md text-gray-600 hover:bg-gray-100">Limpiar</button>
+                        <button type="submit" class="px-6 py-2 bg-capex text-white rounded-md hover:bg-capex-dark font-semibold shadow">
+                            Guardar y Generar Orden de Ingreso
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- ==================== VISTA FORMULARIO DE SALIDA ==================== -->
+        <div id="vista-nueva-salida" class="hidden">
+            <div class="max-w-3xl mx-auto bg-white p-8 rounded-lg shadow-md border-t-4 border-red-600">
+                <h2 class="text-2xl font-bold mb-6 text-red-800 border-b pb-2">
+                    <i class="fa-solid fa-arrow-right-from-bracket mr-2 text-red-600"></i>Registrar Salida de Almacén (Descuento Almacén 4)
+                </h2>
+                
+                <form id="form-salida" onsubmit="guardarSalida(event)" class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Categoría del Producto</label>
+                            <select id="salida_categoria_producto" onchange="actualizarOpcionesClaves('salida')" class="w-full border rounded-md p-2 bg-white font-bold text-red-700 focus:ring-2 focus:ring-red-500">
+                                <option value="Hoja">Hoja de Segunda</option>
+                                <option value="Puerta">Puerta de Segunda</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Fecha de Salida</label>
+                            <input type="date" id="salida_fecha" required class="w-full border rounded-md p-2 focus:ring-2 focus:ring-red-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Folio Salida (Consecutivo)</label>
+                            <input type="text" id="salida_folio" readonly class="w-full border rounded-md p-2 bg-gray-100 font-bold font-mono text-red-600">
+                        </div>
+
+                        <div class="md:col-span-2 bg-red-50 p-4 border border-red-200 rounded-md">
+                            <label class="block text-sm font-bold text-red-900 mb-1">Concepto de Salida</label>
+                            <select id="salida_concepto" required class="w-full border border-red-300 rounded-md p-2 bg-white font-semibold text-red-800 focus:ring-2 focus:ring-red-500">
+                                <option value="" disabled selected>Seleccione el concepto de salida...</option>
+                                <option value="Perdida">Pérdida (Scrap / Desecho Definitivo)</option>
+                                <option value="Salida a fabrica">Salida a fábrica (Reingreso / Retrabajo)</option>
+                                <option value="Salida empaque">Salida empaque</option>
+                                <option value="Venta de Segunda">Venta de Segunda / Remate</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Clave del Producto</label>
+                            <select id="salida_clave" onchange="autocompletarSalida()" required class="w-full border rounded-md p-2 bg-white focus:ring-2 focus:ring-red-500 font-mono text-sm">
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Medida a Retirar</label>
+                            <input type="text" id="salida_medida" placeholder="Se llena automáticamente al elegir clave" required class="w-full border rounded-md p-2 focus:ring-2 focus:ring-red-500">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Cantidad a Retirar</label>
+                            <input type="number" id="salida_cantidad" min="1" required class="w-full border rounded-md p-2 focus:ring-2 focus:ring-red-500">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Autorizado por</label>
+                            <input type="text" id="salida_autorizado" placeholder="Nombre del responsable" required class="w-full border rounded-md p-2 focus:ring-2 focus:ring-red-500">
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Descripción del Producto</label>
+                            <input type="text" id="salida_descripcion" placeholder="Se llena automáticamente al elegir clave" required class="w-full border rounded-md p-2 focus:ring-2 focus:ring-red-500">
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Comentarios / Observaciones de Salida</label>
+                            <textarea id="salida_comentarios" rows="3" placeholder="Detalles o notas adicionales sobre la salida del material..." class="w-full border rounded-md p-2 focus:ring-2 focus:ring-red-500"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 flex justify-end space-x-3">
+                        <button type="reset" class="px-4 py-2 border rounded-md text-gray-600 hover:bg-gray-100">Limpiar</button>
+                        <button type="submit" class="px-6 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 font-semibold shadow">
+                            Guardar y Generar Orden de Salida
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- ==================== VISTA HISTORIAL CON FILTROS ==================== -->
+        <div id="vista-historial" class="hidden space-y-4">
+            <h2 class="text-2xl font-bold text-capex-dark">Historial General de Movimientos</h2>
+            
+            <div class="bg-white p-4 rounded-lg shadow grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-end">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 mb-1">Categoría</label>
+                    <select id="filtro-categoria" onchange="renderizarHistorial()" class="w-full border rounded-md p-2 text-sm bg-white focus:ring-2 focus:ring-capex">
+                        <option value="">Todas</option>
+                        <option value="Hoja">Hoja</option>
+                        <option value="Puerta">Puerta</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 mb-1">Tipo de Movimiento</label>
+                    <select id="filtro-tipo" onchange="renderizarHistorial()" class="w-full border rounded-md p-2 text-sm bg-white focus:ring-2 focus:ring-capex">
+                        <option value="">Todos</option>
+                        <option value="INGRESO">INGRESO</option>
+                        <option value="SALIDA">SALIDA</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 mb-1">Fecha</label>
+                    <input type="date" id="filtro-fecha" onchange="renderizarHistorial()" class="w-full border rounded-md p-2 text-sm focus:ring-2 focus:ring-capex">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 mb-1">Clave</label>
+                    <input type="text" id="filtro-clave" oninput="renderizarHistorial()" placeholder="Filtrar por clave..." class="w-full border rounded-md p-2 text-sm focus:ring-2 focus:ring-capex uppercase font-mono">
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center">
+                <button onclick="limpiarFiltrosHistorial()" class="px-3 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs font-semibold rounded-md transition">
+                    <i class="fa-solid fa-rotate-left mr-1"></i>Limpiar Filtros
+                </button>
+                <span id="contador-resultados" class="text-xs text-gray-500 font-medium">Mostrando todos los registros</span>
+            </div>
+
+            <div class="bg-white rounded-lg shadow overflow-hidden">
+                <table class="w-full text-sm text-left text-gray-500">
+                    <thead class="text-xs text-gray-700 uppercase bg-gray-200">
+                        <tr>
+                            <th class="px-3 py-3">Categoría</th>
+                            <th class="px-3 py-3">Tipo</th>
+                            <th class="px-3 py-3">Fecha</th>
+                            <th class="px-3 py-3">Folio Consecutivo</th>
+                            <th class="px-3 py-3">Clave</th>
+                            <th class="px-3 py-3">Medida</th>
+                            <th class="px-3 py-3">Concepto / Recup.</th>
+                            <th class="px-3 py-3">Descripción</th>
+                            <th class="px-3 py-3 text-center">Cant.</th>
+                            <th class="px-3 py-3 text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-historial-body"></tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ==================== VISTA DE IMPRESIÓN / ORDEN SAE ==================== -->
+    <div id="seccion-orden-impresion" class="hidden print-only bg-white p-8 max-w-4xl mx-auto border border-gray-300">
+        <div class="border-b-2 border-capex pb-4 mb-6 flex justify-between items-center">
+            <div class="flex items-center space-x-4">
+                <svg class="h-10 w-auto text-capex-dark" viewBox="0 0 320 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="2" y="2" width="45" height="76" stroke="#3B4B44" stroke-width="3" fill="none"/>
+                    <path d="M12 10 Q 25 35 12 70" stroke="#3B4B44" stroke-width="2" fill="none"/>
+                    <path d="M22 10 Q 38 30 22 70" stroke="#3B4B44" stroke-width="2" fill="none"/>
+                    <path d="M32 10 Q 45 40 32 70" stroke="#3B4B44" stroke-width="2" fill="none"/>
+                    <text x="60" y="52" fill="#3B4B44" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="44" letter-spacing="2">CAPEX</text>
+                    <text x="62" y="70" fill="#4E6158" font-family="Arial, Helvetica, sans-serif" font-weight="bold" font-size="14" letter-spacing="0.5">Puertas de madera</text>
+                </svg>
+                <div>
+                    <h1 class="text-xl font-bold text-capex-dark" id="print-titulo-orden">ORDEN DE MOVIMIENTO DE ALMACÉN SAE</h1>
+                    <p class="text-xs text-gray-600" id="print-subtitulo-orden">Control Interno de Inventario - CAPEX Puertas de Madera</p>
+                </div>
+            </div>
+            <div class="text-right">
+                <span class="text-xs text-gray-500">Folio Referencia:</span>
+                <p class="text-xl font-bold text-capex" id="print-folio"></p>
+                <p class="text-xs text-gray-500" id="print-fecha"></p>
+            </div>
+        </div>
+
+        <div class="bg-capex-soft p-4 rounded-md mb-6 border-l-4 border-capex" id="print-banner-sae">
+            <p class="font-bold text-sm uppercase text-capex-dark">Instrucción para el Almacenista SAE:</p>
+            <p class="text-sm mt-1" id="print-instruccion-sae"></p>
+        </div>
+
+        <table class="w-full border-collapse border border-gray-300 text-sm mb-6">
+            <thead>
+                <tr class="bg-gray-200 text-capex-dark">
+                    <th class="border border-gray-300 px-2 py-2 text-left">Clave</th>
+                    <th class="border border-gray-300 px-2 py-2 text-left">Descripción del Producto</th>
+                    <th class="border border-gray-300 px-2 py-2 text-left" id="th-col-3">Modelo</th>
+                    <th class="border border-gray-300 px-2 py-2 text-left" id="th-col-4">Medida</th>
+                    <th class="border border-gray-300 px-2 py-2 text-center">Cant.</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="border border-gray-300 px-2 py-2 font-bold font-mono" id="print-clave"></td>
+                    <td class="border border-gray-300 px-2 py-2" id="print-descripcion"></td>
+                    <td class="border border-gray-300 px-2 py-2" id="print-col-3"></td>
+                    <td class="border border-gray-300 px-2 py-2" id="print-col-4"></td>
+                    <td class="border border-gray-300 px-2 py-2 text-center font-bold" id="print-cantidad"></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="bg-gray-50 border p-4 rounded-md mb-6" id="print-seccion-detalles">
+            <div class="grid grid-cols-2 gap-4 text-sm" id="print-grid-detalles"></div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-12 pt-16 text-center text-xs">
+            <div>
+                <div class="border-t border-gray-800 pt-2 font-bold" id="print-autorizo"></div>
+                <p class="text-gray-500">Solicitó / Autorizó</p>
+            </div>
+            <div>
+                <div class="border-t border-gray-800 pt-2 font-bold">______________________</div>
+                <p class="text-gray-500">Capturó en SAE</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // CONFIGURACIÓN DE SUPABASE
+        const SUPABASE_URL = https://ncmzdsmuclckujsnkzdx.supabase.co"; 
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5jbXpkc211Y2xja3Vqc25remR4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEyMjg4ODMsImV4cCI6MjEwNjgwNDg4M30.6_6V44Yoq5udNQt9Q-hqSdX_KVKrO3wbqbmaI88LJqY";              
+        
+        // CORRECCIÓN: Inicialización utilizando el cliente expuesto globalmente por CDN
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        const CATALOGO_HOJAS = {
+            "MDF3-7102150": { descripcion: "HDF 3MM CRUDO (Calibrado) 71 X 214 CM", medida: "71 X 214 CM", modelo: "Crudo" },
+            "MDF3-8102150": { descripcion: "HDF 3MM CRUDO (Calibrado) 81 X 214 CM", medida: "81 X 214 CM", modelo: "Crudo" },
+            "MDF3-9102150": { descripcion: "HDF 3MM CRUDO (Calibrado) 91 X 214 CM", medida: "91 X 214 CM", modelo: "Crudo" },
+            "HDFC70":       { descripcion: "HDF 3 MM CHOCOLATE 71X214 CM", medida: "71 X 214 CM", modelo: "Eucaplac" },
+            "HDFC80":       { descripcion: "HDF 3 MM CHOCOLATE 81X214 CM", medida: "81 X 214 CM", modelo: "Eucaplac" },
+            "HDFC90":       { descripcion: "HDF 3 MM CHOCOLATE 91X214 CM", medida: "91 X 214 CM", modelo: "Eucaplac" },
+            "HDFA70":       { descripcion: "HDF 3 MM ARENA 71X214 CM", medida: "71 X 214 CM", modelo: "Eucaplac" },
+            "HDFA80":       { descripcion: "HDF 3 MM ARENA 81X214 CM", medida: "81 X 214 CM", modelo: "Eucaplac" },
+            "HDFA90":       { descripcion: "HDF 3 MM ARENA 91X214 CM", medida: "91 X 214 CM", modelo: "Eucaplac" },
+            "MDFVV71":      { descripcion: "MDF VENECIA VINTAGE 3 MM 71X214 CM", medida: "71 X 214 CM", modelo: "Venecia" },
+            "MDFVV81":      { descripcion: "MDF VENECIA VINTAGE 3 MM 81X214 CM", medida: "81 X 214 CM", modelo: "Venecia" },
+            "MDFVV91":      { descripcion: "MDF VENECIA VINTAGE 3 MM 91X214 CM", medida: "91 X 214 CM", modelo: "Venecia" },
+            "MDFVC71":      { descripcion: "MDF VENECIA CHOCOLATE 3 MM 71X214 CM", medida: "71 X 214 CM", modelo: "Venecia" },
+            "MDFVC81":      { descripcion: "MDF VENECIA CHOCOLATE 3 MM 81X214 CM", medida: "81 X 214 CM", modelo: "Venecia" },
+            "MDFVC91":      { descripcion: "MDF VENECIA CHOCOLATE 3 MM 91X214 CM", medida: "91 X 214 CM", modelo: "Venecia" },
+            "MDFCC71":      { descripcion: "MDF CATAR CORY 3 MM 71X214 CM", medida: "71 X 214 CM", modelo: "Catar" },
+            "MDFCC81":      { descripcion: "MDF CATAR CORY 3 MM 81X214 CM", medida: "81 X 214 CM", modelo: "Catar" },
+            "MDFCC91":      { descripcion: "MDF CATAR CORY 3 MM 91X214 CM", medida: "91 X 214 CM", modelo: "Catar" },
+            "MDFCS71":      { descripcion: "MDF CATAR SIBERIA 3 MM 71X214 CM TXT", medida: "71 X 214 CM", modelo: "Catar" },
+            "MDFCS81":      { descripcion: "MDF CATAR SIBERIA 3 MM 81X214 CM TXT", medida: "81 X 214 CM", modelo: "Catar" },
+            "MDFCS91":      { descripcion: "MDF CATAR SIBERIA 3 MM 91X214 CM TXT", medida: "91 X 214 CM", modelo: "Catar" },
+            "MDFKSM71":     { descripcion: "MDF KENYA SANTANA MATE 3 MM 71X214 CM", medida: "71 X 214 CM", modelo: "Kenya" },
+            "MDFKSM81":     { descripcion: "MDF KENYA SANTANA MATE 3 MM 81X214 CM", medida: "81 X 214 CM", modelo: "Kenya" },
+            "MDFKSM91":     { descripcion: "MDF KENYA SANTANA MATE 3 MM 91X214 CM", medida: "91 X 214 CM", modelo: "Kenya" },
+            "MDFKNM71":     { descripcion: "MDF KENYA NOGAL MATE 3 MM 71X214 CM", medida: "71 X 214 CM", modelo: "Kenya" },
+            "MDFKNM81":     { descripcion: "MDF KENYA NOGAL MATE 3 MM 81X214 CM", medida: "81 X 214 CM", modelo: "Kenya" },
+            "MDFKNM91":     { descripcion: "MDF KENYA NOGAL MATE 3 MM 91X214 CM", medida: "91 X 214 CM", modelo: "Kenya" }
+        };
+
+        const CATALOGO_PUERTAS = {
+            "ALP210":       { descripcion: "PUERTA ALPINA HASTA 210 CM", medida: "HASTA 210 CM", modelo: "Alpina" },
+            "CAO3210":      { descripcion: "PUERTA DE CAOBILLA 3MM HASTA 210 CM", medida: "HASTA 210 CM", modelo: "Caobilla" },
+            "CAO6210":      { descripcion: "PUERTA DE CAOBILLA 6MM HASTA 210 CM", medida: "HASTA 210 CM", modelo: "Caobilla" },
+            "CAO6SSPM240":  { descripcion: "PUERTA DE CAOBILLA SS PARTICULAS HASTA 240 CM", medida: "HASTA 240 CM", modelo: "Caobilla" },
+            "CED6210":      { descripcion: "PUERTA DE CEDRO 6MM HASTA 210 CM", medida: "HASTA 210 CM", modelo: "Cedro" },
+            "CEDSSPM240":   { descripcion: "PUERTA TRIPLAY DE CEDRO SS PARTICULAS HASTA 240 CM", medida: "HASTA 240 CM", modelo: "Cedro" },
+            "ENCSSPM240":   { descripcion: "PUERTA TRIPLAY DE ENCINO SS PARTICULAS HASTA 240 CM", medida: "HASTA 240 CM", modelo: "Encino" },
+            "EUC-70":       { descripcion: "PUERTA EUCAPAC ARENA 70 HASTA 210 CM", medida: "70 HASTA 210 CM", modelo: "Eucapac" },
+            "EUC-75":       { descripcion: "PUERTA EUCAPAC ARENA 75 HASTA 210 CM", medida: "75 HASTA 210 CM", modelo: "Eucapac" },
+            "EUC-80":       { descripcion: "PUERTA EUCAPAC ARENA 80 HASTA 210 CM", medida: "80 HASTA 210 CM", modelo: "Eucapac" },
+            "EUC-85":       { descripcion: "PUERTA EUCAPAC ARENA 85 HASTA 210 CM", medida: "85 HASTA 210 CM", modelo: "Eucapac" },
+            "EUC-90":       { descripcion: "PUERTA EUCAPAC ARENA 90 HASTA 210 CM", medida: "90 HASTA 210 CM", modelo: "Eucapac" },
+            "PREM-70":      { descripcion: "PUERTA PREMIUM 70 HASTA 210 CM", medida: "70 HASTA 210 CM", modelo: "Premium" },
+            "PREM-80":      { descripcion: "PUERTA PREMIUM 80 HASTA 210 CM", medida: "80 HASTA 210 CM", modelo: "Premium" },
+            "PREM-90":      { descripcion: "PUERTA PREMIUM 90 HASTA 210 CM", medida: "90 HASTA 210 CM", modelo: "Premium" },
+            "PREMSSPM-M":   { descripcion: "PUERTA PREMIUM SS PARTICULAS SS PARTICULAS HASTA 21", medida: "HASTA 210 CM", modelo: "Premium" },
+            "PS-M":         { descripcion: "PUERTA SOLIDA DE MADERA", medida: "ESPECIAL", modelo: "Sólida" },
+            "MDF80":        { descripcion: "PUERTA DE MDF CRUDO 80 HASTA 210 CM", medida: "80 HASTA 210 CM", modelo: "MDF Crudo" }
+        };
+
+        function obtenerCatalogo(categoria) {
+            return categoria === 'Puerta' ? CATALOGO_PUERTAS : CATALOGO_HOJAS;
+        }
+
+        function actualizarOpcionesClaves(tipoFormulario) {
+            let catSelectId = tipoFormulario === 'ingreso' ? 'categoria_producto' : 'salida_categoria_producto';
+            let claveSelectId = tipoFormulario === 'ingreso' ? 'clave' : 'salida_clave';
+
+            const categoria = document.getElementById(catSelectId).value;
+            const catalogo = obtenerCatalogo(categoria);
+            const selectClave = document.getElementById(claveSelectId);
+
+            selectClave.innerHTML = '<option value="" disabled selected>Seleccione una clave...</option>';
+            for (const clave in catalogo) {
+                const opt = document.createElement('option');
+                opt.value = clave;
+                opt.textContent = `${clave} - ${catalogo[clave].descripcion}`;
+                selectClave.appendChild(opt);
+            }
+
+            if (tipoFormulario === 'ingreso') autocompletarIngreso();
+            else autocompletarSalida();
+        }
+
+        function autocompletarIngreso() {
+            const categoria = document.getElementById('categoria_producto').value;
+            const catalogo = obtenerCatalogo(categoria);
+            const claveSelect = document.getElementById('clave').value;
+            const item = catalogo[claveSelect];
+            if (item) {
+                document.getElementById('descripcion').value = item.descripcion;
+                document.getElementById('medida').value = item.medida;
+                document.getElementById('modelo').value = item.modelo || '';
+            } else {
+                document.getElementById('descripcion').value = '';
+                document.getElementById('medida').value = '';
+                document.getElementById('modelo').value = '';
+            }
+        }
+
+        function autocompletarSalida() {
+            const categoria = document.getElementById('salida_categoria_producto').value;
+            const catalogo = obtenerCatalogo(categoria);
+            const claveSelect = document.getElementById('salida_clave').value;
+            const item = catalogo[claveSelect];
+            if (item) {
+                document.getElementById('salida_descripcion').value = item.descripcion;
+                document.getElementById('salida_medida').value = item.medida;
+            } else {
+                document.getElementById('salida_descripcion').value = '';
+                document.getElementById('salida_medida').value = '';
+            }
+        }
+
+        let movimientos = [];
+        let chartSalidasHojasInstance = null;
+        let chartSalidasPuertasInstance = null;
+
+        document.getElementById('fecha').valueAsDate = new Date();
+        document.getElementById('salida_fecha').valueAsDate = new Date();
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            actualizarOpcionesClaves('ingreso');
+            actualizarOpcionesClaves('salida');
+            await cargarMovimientos();
+        });
+
+        async function cargarMovimientos() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('movimientos_merma')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                movimientos = data || [];
+                generarFoliosConsecutivos();
+                actualizarDashboards();
+            } catch (err) {
+                console.error("Error al cargar movimientos desde Supabase:", err.message);
+            }
+        }
+
+        function generarFoliosConsecutivos() {
+            const ingresos = movimientos.filter(m => m.tipo === 'INGRESO');
+            const salidas = movimientos.filter(m => m.tipo === 'SALIDA');
+
+            const numIngreso = ingresos.length + 1;
+            const numSalida = salidas.length + 1;
+
+            document.getElementById('folio_sae').value = `ING-${String(numIngreso).padStart(5, '0')}`;
+            document.getElementById('salida_folio').value = `SAL-${String(numSalida).padStart(5, '0')}`;
+        }
+
+        function evaluarRecuperable() {
+            const esRecuperable = document.getElementById('es_recuperable').value;
+            const contenedorAjuste = document.getElementById('contenedor-medida-ajustar');
+            const campoAjuste = document.getElementById('medida_ajustar');
+
+            if (esRecuperable === 'Sí') {
+                contenedorAjuste.classList.remove('hidden');
+                campoAjuste.setAttribute('required', 'true');
+            } else {
+                contenedorAjuste.classList.add('hidden');
+                campoAjuste.removeAttribute('required');
+                campoAjuste.value = '';
+            }
+        }
+
+        function cambiarPestana(pestana) {
+            ['vista-dashboard-hojas', 'vista-dashboard-puertas', 'vista-nuevo-registro', 'vista-nueva-salida', 'vista-historial'].forEach(v => {
+                document.getElementById(v).classList.add('hidden');
+            });
+
+            ['btn-dashboard-hojas', 'btn-dashboard-puertas', 'btn-nuevo-registro', 'btn-nueva-salida', 'btn-historial'].forEach(b => {
+                document.getElementById(b).className = "px-3 py-2 rounded-md text-sm font-medium hover:bg-capex-light";
+            });
+
+            if (pestana === 'dashboard-hojas') {
+                document.getElementById('vista-dashboard-hojas').classList.remove('hidden');
+                document.getElementById('btn-dashboard-hojas').className = "px-3 py-2 rounded-md text-sm font-medium bg-capex text-white";
+                actualizarDashboards();
+            } else if (pestana === 'dashboard-puertas') {
+                document.getElementById('vista-dashboard-puertas').classList.remove('hidden');
+                document.getElementById('btn-dashboard-puertas').className = "px-3 py-2 rounded-md text-sm font-medium bg-capex text-white";
+                actualizarDashboards();
+            } else if (pestana === 'nuevo-registro') {
+                document.getElementById('vista-nuevo-registro').classList.remove('hidden');
+                document.getElementById('btn-nuevo-registro').className = "px-3 py-2 rounded-md text-sm font-medium bg-capex text-white";
+                generarFoliosConsecutivos();
+            } else if (pestana === 'nueva-salida') {
+                document.getElementById('vista-nueva-salida').classList.remove('hidden');
+                document.getElementById('btn-nueva-salida').className = "px-3 py-2 rounded-md text-sm font-medium bg-capex text-white";
+                generarFoliosConsecutivos();
+            } else if (pestana === 'historial') {
+                document.getElementById('vista-historial').classList.remove('hidden');
+                document.getElementById('btn-historial').className = "px-3 py-2 rounded-md text-sm font-medium bg-capex text-white";
+                renderizarHistorial();
+            }
+        }
+
+        async function guardarIngreso(e) {
+            e.preventDefault();
+            const esRecuperable = document.getElementById('es_recuperable').value;
+
+            const nuevoItem = {
+                categoria: document.getElementById('categoria_producto').value,
+                tipo: 'INGRESO',
+                fecha: document.getElementById('fecha').value,
+                folio_sae: document.getElementById('folio_sae').value,
+                clave: document.getElementById('clave').value,
+                descripcion: document.getElementById('descripcion').value,
+                modelo: document.getElementById('modelo').value,
+                medida: document.getElementById('medida').value.trim(),
+                cantidad: parseInt(document.getElementById('cantidad').value),
+                es_recuperable: esRecuperable,
+                medida_ajustar: esRecuperable === 'Sí' ? document.getElementById('medida_ajustar').value.trim() : 'N/A',
+                autorizado_por: document.getElementById('autorizado_por').value
+            };
+
+            try {
+                const { data, error } = await supabaseClient
+                    .from('movimientos_merma')
+                    .insert([nuevoItem])
+                    .select();
+
+                if (error) throw error;
+
+                if (data && data.length > 0) {
+                    movimientos.unshift(data[0]);
+                }
+
+                imprimirOrden(nuevoItem);
+
+                document.getElementById('form-ingreso').reset();
+                document.getElementById('fecha').valueAsDate = new Date();
+                actualizarOpcionesClaves('ingreso');
+                generarFoliosConsecutivos();
+                evaluarRecuperable();
+            } catch (err) {
+                console.error("Error al guardar ingreso:", err.message);
+                alert("Ocurrió un error al guardar en Supabase: " + err.message);
+            }
+        }
+
+        async function guardarSalida(e) {
+            e.preventDefault();
+            const categoria = document.getElementById('salida_categoria_producto').value;
+            const clave = document.getElementById('salida_clave').value;
+            const catalogo = obtenerCatalogo(categoria);
+            const itemCatalogo = catalogo[clave];
+            const cantidad = parseInt(document.getElementById('salida_cantidad').value);
+
+            const nuevoItem = {
+                categoria: categoria,
+                tipo: 'SALIDA',
+                fecha: document.getElementById('salida_fecha').value,
+                folio_sae: document.getElementById('salida_folio').value,
+                concepto: document.getElementById('salida_concepto').value,
+                clave: clave,
+                modelo: itemCatalogo ? itemCatalogo.modelo : '',
+                medida: document.getElementById('salida_medida').value.trim(),
+                descripcion: document.getElementById('salida_descripcion').value,
+                comentarios: document.getElementById('salida_comentarios').value.trim() || 'Sin comentarios registrados.',
+                cantidad: cantidad,
+                autorizado_por: document.getElementById('salida_autorizado').value
+            };
+
+            try {
+                const { data, error } = await supabaseClient
+                    .from('movimientos_merma')
+                    .insert([nuevoItem])
+                    .select();
+
+                if (error) throw error;
+
+                if (data && data.length > 0) {
+                    movimientos.unshift(data[0]);
+                }
+
+                imprimirOrden(nuevoItem);
+
+                document.getElementById('form-salida').reset();
+                document.getElementById('salida_fecha').valueAsDate = new Date();
+                actualizarOpcionesClaves('salida');
+                generarFoliosConsecutivos();
+            } catch (err) {
+                console.error("Error al guardar salida:", err.message);
+                alert("Ocurrió un error al guardar en Supabase: " + err.message);
+            }
+        }
+
+        // CORRECCIÓN: Manejo de ID como String para evitar errores en registros UUID
+        async function eliminarRegistro(id) {
+            const item = movimientos.find(m => String(m.id) === String(id));
+            if (!item) return;
+
+            const confirmacion = confirm(`¿Estás seguro de que deseas eliminar el registro ${item.folio_sae} (${item.tipo})?`);
+            if (confirmacion) {
+                try {
+                    const { error } = await supabaseClient
+                        .from('movimientos_merma')
+                        .delete()
+                        .eq('id', id);
+
+                    if (error) throw error;
+
+                    movimientos = movimientos.filter(m => String(m.id) !== String(id));
+                    generarFoliosConsecutivos();
+                    renderizarHistorial();
+                    actualizarDashboards();
+                } catch (err) {
+                    console.error("Error al eliminar registro:", err.message);
+                    alert("Error al eliminar en Supabase: " + err.message);
+                }
+            }
+        }
+
+        function imprimirOrden(item) {
+            document.getElementById('print-folio').innerText = item.folio_sae;
+            document.getElementById('print-fecha').innerText = `Fecha: ${item.fecha}`;
+            document.getElementById('print-clave').innerText = item.clave;
+            document.getElementById('print-descripcion').innerText = item.descripcion;
+            document.getElementById('print-cantidad').innerText = item.cantidad;
+            document.getElementById('print-autorizo').innerText = item.autorizado_por;
+
+            const gridDetalles = document.getElementById('print-grid-detalles');
+            const catNombre = item.categoria || 'Hoja';
+
+            if (item.tipo === 'INGRESO') {
+                document.getElementById('print-titulo-orden').innerText = `ORDEN DE INGRESO (${catNombre.toUpperCase()}S SEGUNDA)`;
+                
+                if (catNombre === 'Puerta') {
+                    document.getElementById('print-subtitulo-orden').innerText = "Registro de Entrada de Almacén - CAPEX Puertas de Madera";
+                    document.getElementById('print-instruccion-sae').innerHTML = "Capturar movimiento de <strong>Entrada en SAE</strong> a <u>Almacén 4 (Puertas de Segunda / Merma)</u>.";
+                } else {
+                    document.getElementById('print-subtitulo-orden').innerText = "Traspaso de Entrada: Almacén 3 -> Almacén 4 (CAPEX)";
+                    document.getElementById('print-instruccion-sae').innerHTML = "Capturar movimiento de <strong>Traspaso Interno en SAE</strong> de <u>Almacén 3</u> a <u>Almacén 4 (Merma / Segunda)</u>.";
+                }
+                
+                document.getElementById('th-col-3').innerText = "Modelo";
+                document.getElementById('th-col-4').innerText = "Medida Orig.";
+                document.getElementById('print-col-3').innerText = item.modelo || 'N/A';
+                document.getElementById('print-col-4').innerText = item.medida;
+
+                gridDetalles.innerHTML = `
+                    <div><span class="font-bold text-gray-700">Categoría:</span> <span class="font-bold uppercase ml-2">${catNombre}</span></div>
+                    <div><span class="font-bold text-gray-700">¿Es Recuperable / Remate?:</span> <span class="font-bold uppercase ml-2">${item.es_recuperable}</span></div>
+                    <div class="col-span-2"><span class="font-bold text-gray-700">Ajuste / Observación:</span> <span class="ml-2 font-semibold">${item.medida_ajustar}</span></div>
+                `;
+            } else {
+                document.getElementById('print-titulo-orden').innerText = `ORDEN DE SALIDA (${catNombre.toUpperCase()}S SEGUNDA)`;
+                document.getElementById('print-subtitulo-orden').innerText = "Movimiento de Salida - CAPEX Puertas de Madera";
+                document.getElementById('print-instruccion-sae').innerHTML = `Capturar movimiento de <strong>Salida en SAE</strong> de <u>Almacén 4 (Merma / Segunda)</u> por el concepto: <strong>${item.concepto}</strong>.`;
+
+                document.getElementById('th-col-3').innerText = "Categoría";
+                document.getElementById('th-col-4').innerText = "Medida Retirada";
+                document.getElementById('print-col-3').innerText = catNombre;
+                document.getElementById('print-col-4').innerText = item.medida;
+
+                gridDetalles.innerHTML = `
+                    <div class="col-span-2"><span class="font-bold text-gray-700">Concepto Oficial de Salida:</span> <span class="font-bold text-red-700 ml-2 uppercase">${item.concepto}</span></div>
+                    <div class="col-span-2 border-t pt-2 mt-1"><span class="font-bold text-gray-700">Comentarios / Observaciones:</span> <p class="mt-1 text-gray-800 bg-white p-2 border rounded">${item.comentarios}</p></div>
+                `;
+            }
+
+            const printSection = document.getElementById('seccion-orden-impresion');
+            printSection.classList.remove('hidden', 'print-only');
+            
+            window.print();
+
+            printSection.classList.add('hidden', 'print-only');
+            cambiarPestana(catNombre === 'Puerta' ? 'dashboard-puertas' : 'dashboard-hojas');
+        }
+
+        function actualizarDashboards() {
+            const movHojas = movimientos.filter(m => !m.categoria || m.categoria === 'Hoja');
+            actualizarMetricasyTablas(movHojas, 'hojas');
+
+            const movPuertas = movimientos.filter(m => m.categoria === 'Puerta');
+            actualizarMetricasyTablas(movPuertas, 'puertas');
+        }
+
+        function actualizarMetricasyTablas(dataset, tipo) {
+            const ingresos = dataset.filter(m => m.tipo === 'INGRESO');
+            const salidas = dataset.filter(m => m.tipo === 'SALIDA');
+
+            const totalIngresado = ingresos.reduce((s, m) => s + m.cantidad, 0);
+            const totalSalidas = salidas.reduce((s, m) => s + m.cantidad, 0);
+            const stockActual = totalIngresado - totalSalidas;
+            const recuperablesTotal = ingresos.filter(m => m.es_recuperable === 'Sí').reduce((s, m) => s + m.cantidad, 0);
+
+            document.getElementById(`kpi-${tipo}-ingresado`).innerText = `${totalIngresado.toLocaleString()} Pzas`;
+            document.getElementById(`kpi-${tipo}-salidas`).innerText = `${totalSalidas.toLocaleString()} Pzas`;
+            document.getElementById(`kpi-${tipo}-stock`).innerText = `${stockActual.toLocaleString()} Pzas`;
+            document.getElementById(`kpi-${tipo}-recuperables`).innerText = `${recuperablesTotal.toLocaleString()} Pzas`;
+
+            if (tipo === 'hojas') {
+                const medidasSet = new Set(dataset.map(m => m.medida).filter(Boolean));
+                const tablaMedidas = document.getElementById('tabla-dashboard-medidas');
+                tablaMedidas.innerHTML = '';
+
+                if (medidasSet.size === 0) {
+                    tablaMedidas.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-gray-400">Sin medidas registradas</td></tr>`;
+                } else {
+                    medidasSet.forEach(medida => {
+                        const ing = ingresos.filter(m => m.medida === medida).reduce((s, m) => s + m.cantidad, 0);
+                        const sal = salidas.filter(m => m.medida === medida).reduce((s, m) => s + m.cantidad, 0);
+                        const stockMedida = ing - sal;
+
+                        const tr = document.createElement('tr');
+                        tr.className = "border-b hover:bg-gray-50";
+                        tr.innerHTML = `
+                            <td class="px-3 py-2 font-bold text-capex-dark">${medida}</td>
+                            <td class="px-3 py-2 text-center text-emerald-600 font-medium">+${ing}</td>
+                            <td class="px-3 py-2 text-center text-red-600 font-medium">-${sal}</td>
+                            <td class="px-3 py-2 text-right font-bold ${stockMedida > 0 ? 'text-gray-900' : 'text-red-500'}">${stockMedida} pzas</td>
+                        `;
+                        tablaMedidas.appendChild(tr);
+                    });
+                }
+
+                renderizarTablaClaves(dataset, 'tabla-dashboard-stock', ingresos, salidas);
+                renderizarGraficoConceptos(salidas, 'graficoConceptoSalidas', 'hojas');
+
+            } else if (tipo === 'puertas') {
+                const modelosSet = new Set(dataset.map(m => m.modelo).filter(Boolean));
+                const tablaModelos = document.getElementById('tabla-dashboard-puertas-modelo');
+                tablaModelos.innerHTML = '';
+
+                if (modelosSet.size === 0) {
+                    tablaModelos.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-gray-400">Sin modelos registrados</td></tr>`;
+                } else {
+                    modelosSet.forEach(modelo => {
+                        const ing = ingresos.filter(m => m.modelo === modelo).reduce((s, m) => s + m.cantidad, 0);
+                        const sal = salidas.filter(m => m.modelo === modelo).reduce((s, m) => s + m.cantidad, 0);
+                        const stockModelo = ing - sal;
+
+                        const tr = document.createElement('tr');
+                        tr.className = "border-b hover:bg-gray-50";
+                        tr.innerHTML = `
+                            <td class="px-3 py-2 font-bold text-capex-dark">${modelo}</td>
+                            <td class="px-3 py-2 text-center text-emerald-600 font-medium">+${ing}</td>
+                            <td class="px-3 py-2 text-center text-red-600 font-medium">-${sal}</td>
+                            <td class="px-3 py-2 text-right font-bold ${stockModelo > 0 ? 'text-gray-900' : 'text-red-500'}">${stockModelo} pzas</td>
+                        `;
+                        tablaModelos.appendChild(tr);
+                    });
+                }
+
+                const medidasPuertasSet = new Set(dataset.map(m => m.medida).filter(Boolean));
+                const tablaMedidasPuertas = document.getElementById('tabla-dashboard-puertas-medida');
+                tablaMedidasPuertas.innerHTML = '';
+
+                if (medidasPuertasSet.size === 0) {
+                    tablaMedidasPuertas.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-gray-400">Sin medidas registradas</td></tr>`;
+                } else {
+                    medidasPuertasSet.forEach(medida => {
+                        const ing = ingresos.filter(m => m.medida === medida).reduce((s, m) => s + m.cantidad, 0);
+                        const sal = salidas.filter(m => m.medida === medida).reduce((s, m) => s + m.cantidad, 0);
+                        const stockMedida = ing - sal;
+
+                        const tr = document.createElement('tr');
+                        tr.className = "border-b hover:bg-gray-50";
+                        tr.innerHTML = `
+                            <td class="px-3 py-2 font-bold text-capex-dark">${medida}</td>
+                            <td class="px-3 py-2 text-center text-emerald-600 font-medium">+${ing}</td>
+                            <td class="px-3 py-2 text-center text-red-600 font-medium">-${sal}</td>
+                            <td class="px-3 py-2 text-right font-bold ${stockMedida > 0 ? 'text-gray-900' : 'text-red-500'}">${stockMedida} pzas</td>
+                        `;
+                        tablaMedidasPuertas.appendChild(tr);
+                    });
+                }
+
+                renderizarTablaClaves(dataset, 'tabla-dashboard-puertas-clave', ingresos, salidas);
+                renderizarGraficoConceptos(salidas, 'graficoPuertasSalidas', 'puertas');
+            }
+        }
+
+        function renderizarTablaClaves(dataset, tablaId, ingresos, salidas) {
+            const clavesSet = new Set(dataset.map(m => m.clave));
+            const tabla = document.getElementById(tablaId);
+            tabla.innerHTML = '';
+
+            if (clavesSet.size === 0) {
+                tabla.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-gray-400">Sin movimientos registrados</td></tr>`;
+            } else {
+                clavesSet.forEach(clave => {
+                    const ing = ingresos.filter(m => m.clave === clave).reduce((s, m) => s + m.cantidad, 0);
+                    const sal = salidas.filter(m => m.clave === clave).reduce((s, m) => s + m.cantidad, 0);
+                    const disponible = ing - sal;
+
+                    const tr = document.createElement('tr');
+                    tr.className = "border-b hover:bg-gray-50";
+                    tr.innerHTML = `
+                        <td class="px-3 py-2 font-mono font-bold text-capex-dark">${clave}</td>
+                        <td class="px-3 py-2 text-center text-emerald-600 font-medium">+${ing}</td>
+                        <td class="px-3 py-2 text-center text-red-600 font-medium">-${sal}</td>
+                        <td class="px-3 py-2 text-right font-bold ${disponible > 0 ? 'text-gray-900' : 'text-red-500'}">${disponible} pzas</td>
+                    `;
+                    tabla.appendChild(tr);
+                });
+            }
+        }
+
+        function renderizarGraficoConceptos(salidas, canvasId, tipo) {
+            const conceptos = { 'Perdida': 0, 'Salida a fabrica': 0, 'Salida empaque': 0, 'Venta de Segunda': 0 };
+            salidas.forEach(s => {
+                if (conceptos[s.concepto] !== undefined) {
+                    conceptos[s.concepto] += s.cantidad;
+                }
+            });
+
+            const ctx = document.getElementById(canvasId).getContext('2d');
+
+            if (tipo === 'hojas' && chartSalidasHojasInstance) {
+                chartSalidasHojasInstance.destroy();
+            } else if (tipo === 'puertas' && chartSalidasPuertasInstance) {
+                chartSalidasPuertasInstance.destroy();
+            }
+
+            const chartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Pérdida (Desecho)', 'Salida a fábrica', 'Salida empaque', 'Venta de Segunda'],
+                    datasets: [{
+                        data: [conceptos['Perdida'], conceptos['Salida a fabrica'], conceptos['Salida empaque'], conceptos['Venta de Segunda']],
+                        backgroundColor: ['#DC2626', '#D97706', '#3B4B44', '#059669'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+
+            if (tipo === 'hojas') chartSalidasHojasInstance = chartInstance;
+            else chartSalidasPuertasInstance = chartInstance;
+        }
+
+        function renderizarHistorial() {
+            const tbody = document.getElementById('tabla-historial-body');
+            
+            const fCategoria = document.getElementById('filtro-categoria').value;
+            const fTipo = document.getElementById('filtro-tipo').value;
+            const fFecha = document.getElementById('filtro-fecha').value;
+            const fClave = document.getElementById('filtro-clave').value.trim().toUpperCase();
+
+            const movimientosFiltrados = movimientos.filter(m => {
+                const catItem = m.categoria || 'Hoja'; 
+                
+                const matchCategoria = !fCategoria || catItem === fCategoria;
+                const matchTipo = !fTipo || m.tipo === fTipo;
+                const matchFecha = !fFecha || m.fecha === fFecha;
+                const matchClave = !fClave || (m.clave && m.clave.toUpperCase().includes(fClave));
+
+                return matchCategoria && matchTipo && matchFecha && matchClave;
+            });
+
+            document.getElementById('contador-resultados').innerText = `Mostrando ${movimientosFiltrados.length} de ${movimientos.length} registros`;
+
+            tbody.innerHTML = '';
+
+            if (movimientosFiltrados.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="10" class="text-center py-6 text-gray-400 font-medium">No se encontraron movimientos con los filtros seleccionados.</td></tr>`;
+                return;
+            }
+
+            movimientosFiltrados.forEach(m => {
+                const tr = document.createElement('tr');
+                tr.className = "border-b hover:bg-gray-50";
+                
+                const esIngreso = m.tipo === 'INGRESO';
+                const catNombre = m.categoria || 'Hoja';
+
+                tr.innerHTML = `
+                    <td class="px-3 py-3">
+                        <span class="px-2 py-1 rounded text-xs font-semibold ${catNombre === 'Puerta' ? 'bg-amber-100 text-amber-800' : 'bg-gray-200 text-gray-800'}">
+                            ${catNombre}
+                        </span>
+                    </td>
+                    <td class="px-3 py-3">
+                        <span class="px-2 py-1 rounded text-xs font-bold ${esIngreso ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}">
+                            ${m.tipo}
+                        </span>
+                    </td>
+                    <td class="px-3 py-3">${m.fecha}</td>
+                    <td class="px-3 py-3 font-semibold text-capex-dark font-mono">${m.folio_sae}</td>
+                    <td class="px-3 py-3 font-bold font-mono">${m.clave}</td>
+                    <td class="px-3 py-3">${m.medida || 'N/A'}</td>
+                    <td class="px-3 py-3 font-semibold">${esIngreso ? 'Recup: ' + m.es_recuperable : m.concepto}</td>
+                    <td class="px-3 py-3">${m.descripcion}</td>
+                    <td class="px-3 py-3 text-center font-bold ${esIngreso ? 'text-emerald-600' : 'text-red-600'}">
+                        ${esIngreso ? '+' : '-'}${m.cantidad}
+                    </td>
+                    <td class="px-3 py-3 text-center space-x-1">
+                        <button onclick="reimprimirPorFolio('${m.folio_sae}')" title="Reimprimir Orden" class="text-capex hover:text-capex-dark font-semibold text-xs bg-capex-soft px-2 py-1 rounded border border-capex/20">
+                            <i class="fa-solid fa-print"></i>
+                        </button>
+                        <button onclick="eliminarRegistro('${m.id}')" title="Eliminar Registro" class="text-red-600 hover:text-red-800 font-semibold text-xs bg-red-50 px-2 py-1 rounded border border-red-200">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function limpiarFiltrosHistorial() {
+            document.getElementById('filtro-categoria').value = '';
+            document.getElementById('filtro-tipo').value = '';
+            document.getElementById('filtro-fecha').value = '';
+            document.getElementById('filtro-clave').value = '';
+            renderizarHistorial();
+        }
+
+        // CORRECCIÓN: Búsqueda segura de registro por Folio
+        function reimprimirPorFolio(folio) {
+            const item = movimientos.find(m => m.folio_sae === folio);
+            if (item) imprimirOrden(item);
+        }
+    </script>
+</body>
+</html>
