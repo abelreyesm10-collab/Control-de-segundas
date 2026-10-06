@@ -31,10 +31,20 @@
     <style>
         @media print {
             .no-print { display: none !important; }
-            .print-only { display: block !important; }
             body { background: white; font-size: 11pt; }
+            
+            /* Ocultar secciones de impresión por defecto */
+            #seccion-orden-impresion, 
+            #seccion-reporte-impresion { 
+                display: none !important; 
+            }
+
+            /* Mostrar solo la sección activa al imprimir */
+            #seccion-orden-impresion.active-print, 
+            #seccion-reporte-impresion.active-print { 
+                display: block !important; 
+            }
         }
-        .print-only { display: none; }
     </style>
 </head>
 <body class="bg-gray-100 font-sans text-gray-800">
@@ -429,7 +439,7 @@
             <div class="flex justify-between items-center">
                 <h2 class="text-2xl font-bold text-capex-dark">Historial General de Movimientos</h2>
                 <button onclick="imprimirReporteGeneral()" class="px-4 py-2 bg-capex hover:bg-capex-dark text-white font-semibold rounded-md shadow text-sm transition flex items-center">
-                    <i class="fa-solid fa-print mr-2"></i>Imprimir Reporte
+                    <i class="fa-solid fa-print mr-2"></i>Imprimir Reporte General
                 </button>
             </div>
             
@@ -504,8 +514,8 @@
 
     </div>
 
-    <!-- ==================== VISTA DE IMPRESIÓN / ORDEN SAE ==================== -->
-    <div id="seccion-orden-impresion" class="hidden print-only bg-white p-8 max-w-4xl mx-auto border border-gray-300">
+    <!-- ==================== VISTA DE IMPRESIÓN / ORDEN INDIVIDUAL SAE ==================== -->
+    <div id="seccion-orden-impresion" class="hidden bg-white p-8 max-w-4xl mx-auto border border-gray-300">
         <div class="border-b-2 border-capex pb-4 mb-6 flex justify-between items-center">
             <div class="flex items-center space-x-4">
                 <svg class="h-10 w-auto text-capex-dark" viewBox="0 0 320 80" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -570,8 +580,8 @@
         </div>
     </div>
 
-    <!-- ==================== VISTA DE IMPRESIÓN REPORTE GENERAL ==================== -->
-    <div id="seccion-reporte-impresion" class="hidden print-only bg-white p-6 max-w-5xl mx-auto">
+    <!-- ==================== VISTA DE IMPRESIÓN REPORTE GENERAL DE HISTORIAL ==================== -->
+    <div id="seccion-reporte-impresion" class="hidden bg-white p-6 max-w-5xl mx-auto">
         <div class="border-b-2 border-capex pb-3 mb-4 flex justify-between items-center">
             <div class="flex items-center space-x-3">
                 <svg class="h-8 w-auto text-capex-dark" viewBox="0 0 320 80" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1018,11 +1028,13 @@
             }
 
             const printSection = document.getElementById('seccion-orden-impresion');
-            printSection.classList.remove('hidden', 'print-only');
+            printSection.classList.remove('hidden');
+            printSection.classList.add('active-print');
             
             window.print();
 
-            printSection.classList.add('hidden', 'print-only');
+            printSection.classList.remove('active-print');
+            printSection.classList.add('hidden');
             cambiarPestana(catNombre === 'Puerta' ? 'dashboard-puertas' : 'dashboard-hojas');
         }
 
@@ -1334,11 +1346,13 @@
             }
 
             const seccionReporte = document.getElementById('seccion-reporte-impresion');
-            seccionReporte.classList.remove('hidden', 'print-only');
+            seccionReporte.classList.remove('hidden');
+            seccionReporte.classList.add('active-print');
 
             window.print();
 
-            seccionReporte.classList.add('hidden', 'print-only');
+            seccionReporte.classList.remove('active-print');
+            seccionReporte.classList.add('hidden');
         }
     </script>
 </body>
