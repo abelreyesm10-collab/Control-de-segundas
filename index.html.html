@@ -556,7 +556,7 @@
         const SUPABASE_URL = "https://ncmzdsmuclckujsnkzdx.supabase.co"; 
         const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5jbXpkc211Y2xja3Vqc25remR4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEyMjg4ODMsImV4cCI6MjEwNjgwNDg4M30.6_6V44Yoq5udNQt9Q-hqSdX_KVKrO3wbqbmaI88LJqY";              
         
-        // CORRECCIÓN: Inicialización utilizando el cliente expuesto globalmente por CDN
+        // Inicialización utilizando el cliente expuesto globalmente por CDN
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         const CATALOGO_HOJAS = {
@@ -752,10 +752,12 @@
             }
         }
 
+        // FUNCIÓN CORREGIDA PARA FILTRAR CAMPOS VÁLIDOS EN INGRESO
         async function guardarIngreso(e) {
             e.preventDefault();
             const esRecuperable = document.getElementById('es_recuperable').value;
 
+            // Objeto completo para el estado local e impresión
             const nuevoItem = {
                 categoria: document.getElementById('categoria_producto').value,
                 tipo: 'INGRESO',
@@ -771,16 +773,33 @@
                 autorizado_por: document.getElementById('autorizado_por').value
             };
 
+            // Payload filtrado para Supabase (solo columnas reales de la BD)
+            const payloadLimpio = {
+                categoria: nuevoItem.categoria,
+                tipo: nuevoItem.tipo,
+                fecha: nuevoItem.fecha,
+                folio_sae: nuevoItem.folio_sae,
+                clave: nuevoItem.clave,
+                descripcion: nuevoItem.descripcion,
+                medida: nuevoItem.medida,
+                cantidad: nuevoItem.cantidad,
+                es_recuperable: nuevoItem.es_recuperable === 'Sí',
+                medida_ajustar: nuevoItem.medida_ajustar,
+                autorizado_por: nuevoItem.autorizado_por
+            };
+
             try {
                 const { data, error } = await supabaseClient
                     .from('movimientos_merma')
-                    .insert([nuevoItem])
+                    .insert([payloadLimpio])
                     .select();
 
                 if (error) throw error;
 
                 if (data && data.length > 0) {
-                    movimientos.unshift(data[0]);
+                    // Mantenemos el modelo en la vista agregándolo al objeto retornado
+                    const registroInsertado = { ...data[0], modelo: nuevoItem.modelo };
+                    movimientos.unshift(registroInsertado);
                 }
 
                 imprimirOrden(nuevoItem);
@@ -796,6 +815,7 @@
             }
         }
 
+        // FUNCIÓN CORREGIDA PARA FILTRAR CAMPOS VÁLIDOS EN SALIDA
         async function guardarSalida(e) {
             e.preventDefault();
             const categoria = document.getElementById('salida_categoria_producto').value;
@@ -804,6 +824,7 @@
             const itemCatalogo = catalogo[clave];
             const cantidad = parseInt(document.getElementById('salida_cantidad').value);
 
+            // Objeto completo para el estado local e impresión
             const nuevoItem = {
                 categoria: categoria,
                 tipo: 'SALIDA',
@@ -819,16 +840,37 @@
                 autorizado_por: document.getElementById('salida_autorizado').value
             };
 
+            // Payload filtrado para Supabase (solo columnas reales de la BD)
+            const payloadLimpio = {
+                categoria: nuevoItem.categoria,
+                tipo: nuevoItem.tipo,
+                fecha: nuevoItem.fecha,
+                folio_sae: nuevoItem.folio_sae,
+                motivo: nuevoItem.concepto,
+                clave: nuevoItem.clave,
+                medida: nuevoItem.medida,
+                descripcion: nuevoItem.descripcion,
+                observaciones: nuevoItem.comentarios,
+                cantidad: nuevoItem.cantidad,
+                autorizado_por: nuevoItem.autorizado_por
+            };
+
             try {
                 const { data, error } = await supabaseClient
                     .from('movimientos_merma')
-                    .insert([nuevoItem])
+                    .insert([payloadLimpio])
                     .select();
 
                 if (error) throw error;
 
                 if (data && data.length > 0) {
-                    movimientos.unshift(data[0]);
+                    const registroInsertado = { 
+                        ...data[0], 
+                        modelo: nuevoItem.modelo, 
+                        concepto: nuevoItem.concepto, 
+                        comentarios: nuevoItem.comentarios 
+                    };
+                    movimientos.unshift(registroInsertado);
                 }
 
                 imprimirOrden(nuevoItem);
@@ -843,7 +885,6 @@
             }
         }
 
-        // CORRECCIÓN: Manejo de ID como String para evitar errores en registros UUID
         async function eliminarRegistro(id) {
             const item = movimientos.find(m => String(m.id) === String(id));
             if (!item) return;
@@ -904,7 +945,7 @@
             } else {
                 document.getElementById('print-titulo-orden').innerText = `ORDEN DE SALIDA (${catNombre.toUpperCase()}S SEGUNDA)`;
                 document.getElementById('print-subtitulo-orden').innerText = "Movimiento de Salida - CAPEX Puertas de Madera";
-                document.getElementById('print-instruccion-sae').innerHTML = `Capturar movimiento de <strong>Salida en SAE</strong> de <u>Almacén 4 (Merma / Segunda)</u> por el concepto: <strong>${item.concepto}</strong>.`;
+                document.getElementById('print-instruccion-sae').innerHTML = `Capturar movimiento de <strong>Salida en SAE</strong> de <u>Almacén 4 (Merma / Segunda)</u> por el concepto: <strong>${item.concepto || item.motivo}</strong>.`;
 
                 document.getElementById('th-col-3').innerText = "Categoría";
                 document.getElementById('th-col-4').innerText = "Medida Retirada";
@@ -912,8 +953,8 @@
                 document.getElementById('print-col-4').innerText = item.medida;
 
                 gridDetalles.innerHTML = `
-                    <div class="col-span-2"><span class="font-bold text-gray-700">Concepto Oficial de Salida:</span> <span class="font-bold text-red-700 ml-2 uppercase">${item.concepto}</span></div>
-                    <div class="col-span-2 border-t pt-2 mt-1"><span class="font-bold text-gray-700">Comentarios / Observaciones:</span> <p class="mt-1 text-gray-800 bg-white p-2 border rounded">${item.comentarios}</p></div>
+                    <div class="col-span-2"><span class="font-bold text-gray-700">Concepto Oficial de Salida:</span> <span class="font-bold text-red-700 ml-2 uppercase">${item.concepto || item.motivo}</span></div>
+                    <div class="col-span-2 border-t pt-2 mt-1"><span class="font-bold text-gray-700">Comentarios / Observaciones:</span> <p class="mt-1 text-gray-800 bg-white p-2 border rounded">${item.comentarios || item.observaciones || 'Sin observaciones'}</p></div>
                 `;
             }
 
@@ -938,10 +979,10 @@
             const ingresos = dataset.filter(m => m.tipo === 'INGRESO');
             const salidas = dataset.filter(m => m.tipo === 'SALIDA');
 
-            const totalIngresado = ingresos.reduce((s, m) => s + m.cantidad, 0);
-            const totalSalidas = salidas.reduce((s, m) => s + m.cantidad, 0);
+            const totalIngresado = ingresos.reduce((s, m) => s + Number(m.cantidad || 0), 0);
+            const totalSalidas = salidas.reduce((s, m) => s + Number(m.cantidad || 0), 0);
             const stockActual = totalIngresado - totalSalidas;
-            const recuperablesTotal = ingresos.filter(m => m.es_recuperable === 'Sí').reduce((s, m) => s + m.cantidad, 0);
+            const recuperablesTotal = ingresos.filter(m => m.es_recuperable === true || m.es_recuperable === 'Sí').reduce((s, m) => s + Number(m.cantidad || 0), 0);
 
             document.getElementById(`kpi-${tipo}-ingresado`).innerText = `${totalIngresado.toLocaleString()} Pzas`;
             document.getElementById(`kpi-${tipo}-salidas`).innerText = `${totalSalidas.toLocaleString()} Pzas`;
@@ -957,8 +998,8 @@
                     tablaMedidas.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-gray-400">Sin medidas registradas</td></tr>`;
                 } else {
                     medidasSet.forEach(medida => {
-                        const ing = ingresos.filter(m => m.medida === medida).reduce((s, m) => s + m.cantidad, 0);
-                        const sal = salidas.filter(m => m.medida === medida).reduce((s, m) => s + m.cantidad, 0);
+                        const ing = ingresos.filter(m => m.medida === medida).reduce((s, m) => s + Number(m.cantidad || 0), 0);
+                        const sal = salidas.filter(m => m.medida === medida).reduce((s, m) => s + Number(m.cantidad || 0), 0);
                         const stockMedida = ing - sal;
 
                         const tr = document.createElement('tr');
@@ -985,8 +1026,8 @@
                     tablaModelos.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-gray-400">Sin modelos registrados</td></tr>`;
                 } else {
                     modelosSet.forEach(modelo => {
-                        const ing = ingresos.filter(m => m.modelo === modelo).reduce((s, m) => s + m.cantidad, 0);
-                        const sal = salidas.filter(m => m.modelo === modelo).reduce((s, m) => s + m.cantidad, 0);
+                        const ing = ingresos.filter(m => m.modelo === modelo).reduce((s, m) => s + Number(m.cantidad || 0), 0);
+                        const sal = salidas.filter(m => m.modelo === modelo).reduce((s, m) => s + Number(m.cantidad || 0), 0);
                         const stockModelo = ing - sal;
 
                         const tr = document.createElement('tr');
@@ -1009,8 +1050,8 @@
                     tablaMedidasPuertas.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-gray-400">Sin medidas registradas</td></tr>`;
                 } else {
                     medidasPuertasSet.forEach(medida => {
-                        const ing = ingresos.filter(m => m.medida === medida).reduce((s, m) => s + m.cantidad, 0);
-                        const sal = salidas.filter(m => m.medida === medida).reduce((s, m) => s + m.cantidad, 0);
+                        const ing = ingresos.filter(m => m.medida === medida).reduce((s, m) => s + Number(m.cantidad || 0), 0);
+                        const sal = salidas.filter(m => m.medida === medida).reduce((s, m) => s + Number(m.cantidad || 0), 0);
                         const stockMedida = ing - sal;
 
                         const tr = document.createElement('tr');
@@ -1039,8 +1080,8 @@
                 tabla.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-gray-400">Sin movimientos registrados</td></tr>`;
             } else {
                 clavesSet.forEach(clave => {
-                    const ing = ingresos.filter(m => m.clave === clave).reduce((s, m) => s + m.cantidad, 0);
-                    const sal = salidas.filter(m => m.clave === clave).reduce((s, m) => s + m.cantidad, 0);
+                    const ing = ingresos.filter(m => m.clave === clave).reduce((s, m) => s + Number(m.cantidad || 0), 0);
+                    const sal = salidas.filter(m => m.clave === clave).reduce((s, m) => s + Number(m.cantidad || 0), 0);
                     const disponible = ing - sal;
 
                     const tr = document.createElement('tr');
@@ -1059,8 +1100,9 @@
         function renderizarGraficoConceptos(salidas, canvasId, tipo) {
             const conceptos = { 'Perdida': 0, 'Salida a fabrica': 0, 'Salida empaque': 0, 'Venta de Segunda': 0 };
             salidas.forEach(s => {
-                if (conceptos[s.concepto] !== undefined) {
-                    conceptos[s.concepto] += s.cantidad;
+                const c = s.concepto || s.motivo;
+                if (conceptos[c] !== undefined) {
+                    conceptos[c] += Number(s.cantidad || 0);
                 }
             });
 
@@ -1126,6 +1168,7 @@
                 
                 const esIngreso = m.tipo === 'INGRESO';
                 const catNombre = m.categoria || 'Hoja';
+                const recupTexto = typeof m.es_recuperable === 'boolean' ? (m.es_recuperable ? 'Sí' : 'No') : (m.es_recuperable || 'No');
 
                 tr.innerHTML = `
                     <td class="px-3 py-3">
@@ -1142,7 +1185,7 @@
                     <td class="px-3 py-3 font-semibold text-capex-dark font-mono">${m.folio_sae}</td>
                     <td class="px-3 py-3 font-bold font-mono">${m.clave}</td>
                     <td class="px-3 py-3">${m.medida || 'N/A'}</td>
-                    <td class="px-3 py-3 font-semibold">${esIngreso ? 'Recup: ' + m.es_recuperable : m.concepto}</td>
+                    <td class="px-3 py-3 font-semibold">${esIngreso ? 'Recup: ' + recupTexto : (m.concepto || m.motivo)}</td>
                     <td class="px-3 py-3">${m.descripcion}</td>
                     <td class="px-3 py-3 text-center font-bold ${esIngreso ? 'text-emerald-600' : 'text-red-600'}">
                         ${esIngreso ? '+' : '-'}${m.cantidad}
@@ -1168,7 +1211,6 @@
             renderizarHistorial();
         }
 
-        // CORRECCIÓN: Búsqueda segura de registro por Folio
         function reimprimirPorFolio(folio) {
             const item = movimientos.find(m => m.folio_sae === folio);
             if (item) imprimirOrden(item);
