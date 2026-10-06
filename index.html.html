@@ -123,7 +123,7 @@
                 <div class="bg-white p-5 rounded-lg shadow border-t-2 border-capex">
                     <h2 class="text-lg font-bold text-capex-dark mb-4 flex justify-between items-center">
                         <span><i class="fa-solid fa-ruler-combined text-capex mr-2"></i>Stock de Hojas por Medida</span>
-                        <span class="text-xs bg-capex-soft text-capex px-2 py-1 rounded">Disponibles</span>
+                        <span class="text-xs bg-capex-soft text-capex px-2 py-1 rounded">Haz clic para desglosar</span>
                     </h2>
                     <div class="overflow-y-auto max-h-72">
                         <table class="w-full text-sm text-left text-gray-500">
@@ -143,7 +143,7 @@
                 <div class="bg-white p-5 rounded-lg shadow border-t-2 border-capex">
                     <h2 class="text-lg font-bold text-capex-dark mb-4 flex justify-between items-center">
                         <span><i class="fa-solid fa-barcode text-capex mr-2"></i>Stock por Clave (Almacén 4)</span>
-                        <span class="text-xs bg-capex-soft text-capex px-2 py-1 rounded">Disponibles</span>
+                        <span class="text-xs bg-capex-soft text-capex px-2 py-1 rounded">Haz clic para ver movimientos</span>
                     </h2>
                     <div class="overflow-y-auto max-h-72">
                         <table class="w-full text-sm text-left text-gray-500">
@@ -1073,15 +1073,58 @@
                         const sal = salidas.filter(m => m.medida === medida).reduce((s, m) => s + Number(m.cantidad || 0), 0);
                         const stockMedida = ing - sal;
 
+                        // Fila Principal de Medida
                         const tr = document.createElement('tr');
-                        tr.className = "border-b hover:bg-gray-50";
+                        tr.className = "border-b hover:bg-emerald-50 cursor-pointer transition";
+                        tr.onclick = () => toggleDetalleMedida(medida);
                         tr.innerHTML = `
-                            <td class="px-3 py-2 font-bold text-capex-dark">${medida}</td>
+                            <td class="px-3 py-2 font-bold text-capex-dark flex items-center">
+                                <i class="fa-solid fa-chevron-right text-xs mr-2 text-capex transition-transform" id="icon-medida-${medida.replace(/\s+/g, '-')}"></i>
+                                ${medida}
+                            </td>
                             <td class="px-3 py-2 text-center text-emerald-600 font-medium">+${ing}</td>
                             <td class="px-3 py-2 text-center text-red-600 font-medium">-${sal}</td>
                             <td class="px-3 py-2 text-right font-bold ${stockMedida > 0 ? 'text-gray-900' : 'text-red-500'}">${stockMedida} pzas</td>
                         `;
                         tablaMedidas.appendChild(tr);
+
+                        // Fila Detalle (Desglose de Hojas por esta medida)
+                        const trDetalle = document.createElement('tr');
+                        trDetalle.id = `detalle-medida-${medida.replace(/\s+/g, '-')}`;
+                        trDetalle.className = "hidden bg-gray-50 border-b";
+
+                        const hojasMedida = dataset.filter(m => m.medida === medida);
+                        const clavesMedida = [...new Set(hojasMedida.map(m => m.clave))];
+
+                        let htmlDetalle = `<td colspan="4" class="px-4 py-2 text-xs">
+                            <div class="font-semibold text-capex mb-1"><i class="fa-solid fa-layer-group mr-1"></i>Hojas registradas en medida ${medida}:</div>
+                            <table class="w-full text-xs bg-white rounded border">
+                                <thead class="bg-gray-100">
+                                    <tr>
+                                        <th class="p-1 text-left">Clave</th>
+                                        <th class="p-1 text-left">Descripción</th>
+                                        <th class="p-1 text-right">Stock</th>
+                                    </tr>
+                                </thead>
+                                <tbody>`;
+
+                        clavesMedida.forEach(c => {
+                            const itemCat = CATALOGO_HOJAS[c] || CATALOGO_PUERTAS[c] || {};
+                            const cIng = ingresos.filter(m => m.clave === c).reduce((s, m) => s + Number(m.cantidad || 0), 0);
+                            const cSal = salidas.filter(m => m.clave === c).reduce((s, m) => s + Number(m.cantidad || 0), 0);
+                            const cStock = cIng - cSal;
+
+                            htmlDetalle += `
+                                <tr class="border-t hover:bg-emerald-50 cursor-pointer" onclick="event.stopPropagation(); verMovimientosClave('${c}')">
+                                    <td class="p-1 font-mono font-bold text-capex">${c}</td>
+                                    <td class="p-1 text-gray-600">${itemCat.descripcion || ''}</td>
+                                    <td class="p-1 text-right font-bold ${cStock > 0 ? 'text-gray-800' : 'text-red-500'}">${cStock} pzas</td>
+                                </tr>`;
+                        });
+
+                        htmlDetalle += `</tbody></table></td>`;
+                        trDetalle.innerHTML = htmlDetalle;
+                        tablaMedidas.appendChild(trDetalle);
                     });
                 }
 
@@ -1156,9 +1199,15 @@
                     const disponible = ing - sal;
 
                     const tr = document.createElement('tr');
-                    tr.className = "border-b hover:bg-gray-50";
+                    tr.className = "border-b hover:bg-capex-soft cursor-pointer transition";
+                    tr.title = "Haz clic para ver todos los movimientos de esta clave";
+                    tr.onclick = () => verMovimientosClave(clave);
+
                     tr.innerHTML = `
-                        <td class="px-3 py-2 font-mono font-bold text-capex-dark">${clave}</td>
+                        <td class="px-3 py-2 font-mono font-bold text-capex-dark flex items-center justify-between">
+                            <span>${clave}</span>
+                            <i class="fa-solid fa-arrow-right text-xs text-capex/50"></i>
+                        </td>
                         <td class="px-3 py-2 text-center text-emerald-600 font-medium">+${ing}</td>
                         <td class="px-3 py-2 text-center text-red-600 font-medium">-${sal}</td>
                         <td class="px-3 py-2 text-right font-bold ${disponible > 0 ? 'text-gray-900' : 'text-red-500'}">${disponible} pzas</td>
@@ -1353,6 +1402,31 @@
 
             seccionReporte.classList.remove('active-print');
             seccionReporte.classList.add('hidden');
+        }
+
+        // --- FUNCIONES INTERACTIVAS NUEVAS ---
+
+        // Función para desplegar/ocultar las hojas asociadas a una medida
+        function toggleDetalleMedida(medida) {
+            const idSaneado = medida.replace(/\s+/g, '-');
+            const trDetalle = document.getElementById(`detalle-medida-${idSaneado}`);
+            const icono = document.getElementById(`icon-medida-${idSaneado}`);
+
+            if (trDetalle) {
+                trDetalle.classList.toggle('hidden');
+                if (icono) {
+                    icono.classList.toggle('rotate-90');
+                }
+            }
+        }
+
+        // Función para ver los movimientos de una clave directamente en el Historial
+        function verMovimientosClave(clave) {
+            cambiarPestana('historial');
+            limpiarFiltrosHistorial();
+            const inputClave = document.getElementById('filtro-clave');
+            inputClave.value = clave;
+            renderizarHistorial();
         }
     </script>
 </body>
