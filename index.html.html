@@ -514,6 +514,95 @@
 
     </div>
 
+    <!-- MODAL PARA EDICIÓN DE REGISTROS -->
+    <div id="modal-editar" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 no-print">
+        <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto border-t-4 border-blue-600">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="text-xl font-bold text-gray-800 flex items-center">
+                    <i class="fa-solid fa-pen-to-square text-blue-600 mr-2"></i>Editar Registro
+                </h3>
+                <button onclick="cerrarModalEditar()" class="text-gray-400 hover:text-gray-600 text-xl font-bold">&times;</button>
+            </div>
+
+            <form id="form-editar" onsubmit="guardarEdicion(event)" class="space-y-4">
+                <input type="hidden" id="edit-id">
+                <input type="hidden" id="edit-tipo">
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-700 mb-1">Folio (Lectura)</label>
+                        <input type="text" id="edit-folio" readonly class="w-full border rounded-md p-2 bg-gray-100 font-mono font-bold text-xs text-gray-600">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-700 mb-1">Categoría</label>
+                        <select id="edit-categoria" onchange="actualizarClavesModalEditar()" class="w-full border rounded-md p-2 text-xs focus:ring-2 focus:ring-blue-500">
+                            <option value="Hoja">Hoja</option>
+                            <option value="Puerta">Puerta</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-700 mb-1">Fecha</label>
+                        <input type="date" id="edit-fecha" required class="w-full border rounded-md p-2 text-xs focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-700 mb-1">Clave</label>
+                        <select id="edit-clave" onchange="autocompletarModalEditar()" required class="w-full border rounded-md p-2 text-xs font-mono focus:ring-2 focus:ring-blue-500">
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-700 mb-1">Medida</label>
+                        <input type="text" id="edit-medida" required class="w-full border rounded-md p-2 text-xs focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-700 mb-1">Cantidad</label>
+                        <input type="number" id="edit-cantidad" min="1" required class="w-full border rounded-md p-2 text-xs focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-semibold text-gray-700 mb-1">Descripción</label>
+                        <input type="text" id="edit-descripcion" required class="w-full border rounded-md p-2 text-xs focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-700 mb-1">Autorizado por</label>
+                        <input type="text" id="edit-autorizado" required class="w-full border rounded-md p-2 text-xs focus:ring-2 focus:ring-blue-500">
+                    </div>
+
+                    <!-- CAMPOS ESPECÍFICOS PARA INGRESO -->
+                    <div id="edit-campo-recuperable" class="hidden">
+                        <label class="block text-xs font-semibold text-gray-700 mb-1">¿Es Recuperable?</label>
+                        <select id="edit-es-recuperable" onchange="evaluarModalEditarRecuperable()" class="w-full border rounded-md p-2 text-xs focus:ring-2 focus:ring-blue-500">
+                            <option value="No">No</option>
+                            <option value="Sí">Sí</option>
+                        </select>
+                    </div>
+                    <div id="edit-campo-medida-ajustar" class="hidden">
+                        <label class="block text-xs font-semibold text-gray-700 mb-1">Medida / Ajuste</label>
+                        <input type="text" id="edit-medida-ajustar" class="w-full border rounded-md p-2 text-xs focus:ring-2 focus:ring-blue-500">
+                    </div>
+
+                    <!-- CAMPOS ESPECÍFICOS PARA SALIDA -->
+                    <div id="edit-campo-concepto" class="hidden md:col-span-2">
+                        <label class="block text-xs font-semibold text-gray-700 mb-1">Concepto de Salida</label>
+                        <select id="edit-concepto" class="w-full border rounded-md p-2 text-xs focus:ring-2 focus:ring-blue-500">
+                            <option value="Perdida">Pérdida (Scrap / Desecho Definitivo)</option>
+                            <option value="Salida a fabrica">Salida a fábrica (Reingreso / Retrabajo)</option>
+                            <option value="Salida empaque">Salida empaque</option>
+                            <option value="Venta de Segunda">Venta de Segunda / Remate</option>
+                        </select>
+                    </div>
+                    <div id="edit-campo-observaciones" class="hidden md:col-span-2">
+                        <label class="block text-xs font-semibold text-gray-700 mb-1">Observaciones</label>
+                        <textarea id="edit-observaciones" rows="2" class="w-full border rounded-md p-2 text-xs focus:ring-2 focus:ring-blue-500"></textarea>
+                    </div>
+                </div>
+
+                <div class="pt-4 flex justify-end space-x-2 border-t">
+                    <button type="button" onclick="cerrarModalEditar()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md text-xs font-semibold hover:bg-gray-300">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md text-xs font-semibold hover:bg-blue-700 shadow">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- ==================== VISTA DE IMPRESIÓN / ORDEN INDIVIDUAL SAE ==================== -->
     <div id="seccion-orden-impresion" class="hidden bg-white p-8 max-w-4xl mx-auto border border-gray-300">
         <div class="border-b-2 border-capex pb-4 mb-6 flex justify-between items-center">
@@ -989,6 +1078,139 @@
             }
         }
 
+        // --- FUNCIONES PARA LA EDICIÓN DE REGISTROS ---
+        function abrirModalEditar(id) {
+            const item = movimientos.find(m => String(m.id) === String(id));
+            if (!item) return;
+
+            document.getElementById('edit-id').value = item.id;
+            document.getElementById('edit-tipo').value = item.tipo;
+            document.getElementById('edit-folio').value = item.folio_sae || '';
+            document.getElementById('edit-categoria').value = item.categoria || 'Hoja';
+            document.getElementById('edit-fecha').value = item.fecha ? item.fecha.split('T')[0] : '';
+            document.getElementById('edit-medida').value = item.medida || '';
+            document.getElementById('edit-cantidad').value = item.cantidad || 1;
+            document.getElementById('edit-descripcion').value = item.descripcion || '';
+            document.getElementById('edit-autorizado').value = item.autorizado_por || '';
+
+            actualizarClavesModalEditar();
+            document.getElementById('edit-clave').value = item.clave || '';
+
+            const esIngreso = item.tipo === 'INGRESO';
+            document.getElementById('edit-campo-recuperable').classList.toggle('hidden', !esIngreso);
+            document.getElementById('edit-campo-medida-ajustar').classList.toggle('hidden', !esIngreso);
+            document.getElementById('edit-campo-concepto').classList.toggle('hidden', esIngreso);
+            document.getElementById('edit-campo-observaciones').classList.toggle('hidden', esIngreso);
+
+            if (esIngreso) {
+                const recup = typeof item.es_recuperable === 'boolean' ? (item.es_recuperable ? 'Sí' : 'No') : (item.es_recuperable || 'No');
+                document.getElementById('edit-es-recuperable').value = recup;
+                document.getElementById('edit-medida-ajustar').value = item.medida_ajustar || '';
+                evaluarModalEditarRecuperable();
+            } else {
+                document.getElementById('edit-concepto').value = item.concepto || item.motivo || 'Perdida';
+                document.getElementById('edit-observaciones').value = item.comentarios || item.observaciones || '';
+            }
+
+            document.getElementById('modal-editar').classList.remove('hidden');
+        }
+
+        function cerrarModalEditar() {
+            document.getElementById('modal-editar').classList.add('hidden');
+        }
+
+        function actualizarClavesModalEditar() {
+            const categoria = document.getElementById('edit-categoria').value;
+            const catalogo = obtenerCatalogo(categoria);
+            const selectClave = document.getElementById('edit-clave');
+
+            selectClave.innerHTML = '<option value="" disabled selected>Seleccione una clave...</option>';
+            for (const clave in catalogo) {
+                const opt = document.createElement('option');
+                opt.value = clave;
+                opt.textContent = `${clave} - ${catalogo[clave].descripcion}`;
+                selectClave.appendChild(opt);
+            }
+        }
+
+        function autocompletarModalEditar() {
+            const categoria = document.getElementById('edit-categoria').value;
+            const catalogo = obtenerCatalogo(categoria);
+            const claveSelect = document.getElementById('edit-clave').value;
+            const item = catalogo[claveSelect];
+            if (item) {
+                document.getElementById('edit-descripcion').value = item.descripcion;
+                document.getElementById('edit-medida').value = item.medida;
+            }
+        }
+
+        function evaluarModalEditarRecuperable() {
+            const esRecup = document.getElementById('edit-es-recuperable').value;
+            const campoAjuste = document.getElementById('edit-medida-ajustar');
+            if (esRecup === 'Sí') {
+                campoAjuste.removeAttribute('disabled');
+            } else {
+                campoAjuste.value = 'N/A';
+            }
+        }
+
+        async function guardarEdicion(e) {
+            e.preventDefault();
+            const id = document.getElementById('edit-id').value;
+            const tipo = document.getElementById('edit-tipo').value;
+            const categoria = document.getElementById('edit-categoria').value;
+            const clave = document.getElementById('edit-clave').value;
+            const catalogo = obtenerCatalogo(categoria);
+            const itemCat = catalogo[clave] || {};
+
+            let payload = {
+                categoria: categoria,
+                fecha: document.getElementById('edit-fecha').value,
+                clave: clave,
+                medida: document.getElementById('edit-medida').value.trim(),
+                cantidad: parseInt(document.getElementById('edit-cantidad').value),
+                descripcion: document.getElementById('edit-descripcion').value.trim(),
+                autorizado_por: document.getElementById('edit-autorizado').value.trim()
+            };
+
+            if (tipo === 'INGRESO') {
+                const esRecup = document.getElementById('edit-es-recuperable').value;
+                payload.es_recuperable = esRecup === 'Sí';
+                payload.medida_ajustar = esRecup === 'Sí' ? document.getElementById('edit-medida-ajustar').value.trim() : 'N/A';
+            } else {
+                payload.motivo = document.getElementById('edit-concepto').value;
+                payload.observaciones = document.getElementById('edit-observaciones').value.trim();
+            }
+
+            try {
+                const { error } = await supabaseClient
+                    .from('movimientos_merma')
+                    .update(payload)
+                    .eq('id', id);
+
+                if (error) throw error;
+
+                const index = movimientos.findIndex(m => String(m.id) === String(id));
+                if (index !== -1) {
+                    movimientos[index] = {
+                        ...movimientos[index],
+                        ...payload,
+                        modelo: itemCat.modelo || movimientos[index].modelo,
+                        concepto: payload.motivo || movimientos[index].concepto,
+                        comentarios: payload.observaciones || movimientos[index].comentarios
+                    };
+                }
+
+                cerrarModalEditar();
+                renderizarHistorial();
+                actualizarDashboards();
+                alert("Registro actualizado correctamente.");
+            } catch (err) {
+                console.error("Error al actualizar registro:", err.message);
+                alert("Error al actualizar en Supabase: " + err.message);
+            }
+        }
+
         function imprimirOrden(item) {
             document.getElementById('print-folio').innerText = item.folio_sae;
             document.getElementById('print-fecha').innerText = `Fecha: ${formatearFechaCorta(item.fecha)}`;
@@ -1328,6 +1550,9 @@
                         ${esIngreso ? '+' : '-'}${m.cantidad}
                     </td>
                     <td class="px-3 py-3 text-center space-x-1">
+                        <button onclick="abrirModalEditar('${m.id}')" title="Editar Registro" class="text-blue-600 hover:text-blue-800 font-semibold text-xs bg-blue-50 px-2 py-1 rounded border border-blue-200">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
                         <button onclick="reimprimirPorFolio('${m.folio_sae}')" title="Reimprimir Orden" class="text-capex hover:text-capex-dark font-semibold text-xs bg-capex-soft px-2 py-1 rounded border border-capex/20">
                             <i class="fa-solid fa-print"></i>
                         </button>
