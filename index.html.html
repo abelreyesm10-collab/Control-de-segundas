@@ -634,6 +634,16 @@
         // Inicialización del cliente Supabase
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+        // Función para convertir YYYY-MM-DD a formato corto DD/MM/YYYY
+        function formatearFechaCorta(fechaStr) {
+            if (!fechaStr) return '';
+            const partes = fechaStr.split('T')[0].split('-');
+            if (partes.length === 3) {
+                return `${partes[2]}/${partes[1]}/${partes[0]}`;
+            }
+            return fechaStr;
+        }
+
         const CATALOGO_HOJAS = {
             "MDF3-7102150": { descripcion: "HDF 3MM CRUDO (Calibrado) 71 X 214 CM", medida: "71 X 214 CM", modelo: "Crudo" },
             "MDF3-8102150": { descripcion: "HDF 3MM CRUDO (Calibrado) 81 X 214 CM", medida: "81 X 214 CM", modelo: "Crudo" },
@@ -981,7 +991,7 @@
 
         function imprimirOrden(item) {
             document.getElementById('print-folio').innerText = item.folio_sae;
-            document.getElementById('print-fecha').innerText = `Fecha: ${item.fecha}`;
+            document.getElementById('print-fecha').innerText = `Fecha: ${formatearFechaCorta(item.fecha)}`;
             document.getElementById('print-clave').innerText = item.clave;
             document.getElementById('print-descripcion').innerText = item.descripcion;
             document.getElementById('print-cantidad').innerText = item.cantidad;
@@ -1308,7 +1318,7 @@
                             ${m.tipo}
                         </span>
                     </td>
-                    <td class="px-3 py-3">${m.fecha}</td>
+                    <td class="px-3 py-3">${formatearFechaCorta(m.fecha)}</td>
                     <td class="px-3 py-3 font-semibold text-capex-dark font-mono">${m.folio_sae}</td>
                     <td class="px-3 py-3 font-bold font-mono">${m.clave}</td>
                     <td class="px-3 py-3">${m.medida || 'N/A'}</td>
@@ -1349,8 +1359,13 @@
             const tbodyReporte = document.getElementById('tabla-reporte-body');
             tbodyReporte.innerHTML = '';
 
-            const hoy = new Date().toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' });
-            document.getElementById('reporte-fecha-impresion').innerText = hoy;
+            const hoy = new Date();
+            const dia = String(hoy.getDate()).padStart(2, '0');
+            const mes = String(hoy.getMonth() + 1).padStart(2, '0');
+            const anio = hoy.getFullYear();
+            const fechaCortaHoy = `${dia}/${mes}/${anio}`;
+
+            document.getElementById('reporte-fecha-impresion').innerText = fechaCortaHoy;
             document.getElementById('reporte-total-registros').innerText = ultimosFiltrados.length;
 
             let notasFiltro = [];
@@ -1364,7 +1379,11 @@
             if (fCat) notasFiltro.push(`Cat: ${fCat}`);
             if (fTipo) notasFiltro.push(`Tipo: ${fTipo}`);
             if (fConc) notasFiltro.push(`Concepto: ${fConc}`);
-            if (fDesde || fHasta) notasFiltro.push(`Rango: ${fDesde || 'Inicio'} al ${fHasta || 'Hoy'}`);
+            if (fDesde || fHasta) {
+                const dCorta = fDesde ? formatearFechaCorta(fDesde) : 'Inicio';
+                const hCorta = fHasta ? formatearFechaCorta(fHasta) : 'Hoy';
+                notasFiltro.push(`Rango: ${dCorta} al ${hCorta}`);
+            }
             if (fClave) notasFiltro.push(`Clave: ${fClave}`);
 
             document.getElementById('reporte-filtros-aplicados').innerText = notasFiltro.length > 0 ? `Filtros: ${notasFiltro.join(' | ')}` : 'Filtros: Todos los registros';
@@ -1382,7 +1401,7 @@
                     tr.innerHTML = `
                         <td class="border border-gray-300 px-2 py-1 font-semibold">${catNombre}</td>
                         <td class="border border-gray-300 px-2 py-1 font-bold ${esIngreso ? 'text-emerald-700' : 'text-red-700'}">${m.tipo}</td>
-                        <td class="border border-gray-300 px-2 py-1">${m.fecha}</td>
+                        <td class="border border-gray-300 px-2 py-1">${formatearFechaCorta(m.fecha)}</td>
                         <td class="border border-gray-300 px-2 py-1 font-mono">${m.folio_sae}</td>
                         <td class="border border-gray-300 px-2 py-1 font-mono font-bold">${m.clave}</td>
                         <td class="border border-gray-300 px-2 py-1">${m.medida || 'N/A'}</td>
