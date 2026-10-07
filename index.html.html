@@ -33,13 +33,11 @@
             .no-print { display: none !important; }
             body { background: white; font-size: 11pt; }
             
-            /* Ocultar secciones de impresión por defecto */
             #seccion-orden-impresion, 
             #seccion-reporte-impresion { 
                 display: none !important; 
             }
 
-            /* Mostrar solo la sección activa al imprimir */
             #seccion-orden-impresion.active-print, 
             #seccion-reporte-impresion.active-print { 
                 display: block !important; 
@@ -53,8 +51,6 @@
     <nav class="bg-capex-dark text-white shadow-lg no-print">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
-                
-                <!-- LOGO SVG INTEGRADO -->
                 <div class="flex items-center space-x-3 bg-white px-3 py-1.5 rounded-md">
                     <svg class="h-8 w-auto text-capex-dark" viewBox="0 0 320 80" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <rect x="2" y="2" width="45" height="76" stroke="#3B4B44" stroke-width="3" fill="none"/>
@@ -90,7 +86,7 @@
     <!-- CONTENEDOR PRINCIPAL INTERFAZ WEB -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 no-print">
 
-        <!-- ==================== VISTA 1: DASHBOARD HOJAS DE SEGUNDA ==================== -->
+        <!-- DASHBOARD HOJAS DE SEGUNDA -->
         <div id="vista-dashboard-hojas" class="space-y-6">
             <div class="flex justify-between items-center border-b pb-3">
                 <div>
@@ -169,7 +165,7 @@
             </div>
         </div>
 
-        <!-- ==================== VISTA 2: DASHBOARD PUERTAS DE SEGUNDA ==================== -->
+        <!-- DASHBOARD PUERTAS DE SEGUNDA -->
         <div id="vista-dashboard-puertas" class="hidden space-y-6">
             <div class="flex justify-between items-center border-b pb-3">
                 <div>
@@ -270,7 +266,7 @@
             </div>
         </div>
 
-        <!-- ==================== VISTA FORMULARIO DE INGRESO ==================== -->
+        <!-- FORMULARIO DE INGRESO -->
         <div id="vista-nuevo-registro" class="hidden">
             <div class="max-w-3xl mx-auto bg-white p-8 rounded-lg shadow-md border-t-4 border-capex">
                 <h2 class="text-2xl font-bold mb-6 text-capex-dark border-b pb-2">
@@ -356,15 +352,15 @@
             </div>
         </div>
 
-        <!-- ==================== VISTA FORMULARIO DE SALIDA ==================== -->
+        <!-- FORMULARIO DE SALIDA (MODIFICADO PARA MÚLTIPLES CLAVES) -->
         <div id="vista-nueva-salida" class="hidden">
-            <div class="max-w-3xl mx-auto bg-white p-8 rounded-lg shadow-md border-t-4 border-red-600">
+            <div class="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-md border-t-4 border-red-600">
                 <h2 class="text-2xl font-bold mb-6 text-red-800 border-b pb-2">
                     <i class="fa-solid fa-arrow-right-from-bracket mr-2 text-red-600"></i>Registrar Salida de Almacén (Descuento Almacén 4)
                 </h2>
                 
                 <form id="form-salida" onsubmit="guardarSalida(event)" class="space-y-4">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
                             <label class="block text-sm font-semibold text-gray-700 mb-1">Categoría del Producto</label>
                             <select id="salida_categoria_producto" onchange="actualizarOpcionesClaves('salida')" class="w-full border rounded-md p-2 bg-white font-bold text-red-700 focus:ring-2 focus:ring-red-500">
@@ -393,39 +389,47 @@
                         </div>
 
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">Clave del Producto</label>
-                            <select id="salida_clave" onchange="autocompletarSalida()" required class="w-full border rounded-md p-2 bg-white focus:ring-2 focus:ring-red-500 font-mono text-sm">
-                            </select>
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">Medida a Retirar</label>
-                            <input type="text" id="salida_medida" placeholder="Se llena automáticamente al elegir clave" required class="w-full border rounded-md p-2 focus:ring-2 focus:ring-red-500">
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">Cantidad a Retirar</label>
-                            <input type="number" id="salida_cantidad" min="1" required class="w-full border rounded-md p-2 focus:ring-2 focus:ring-red-500">
-                        </div>
-
-                        <div>
                             <label class="block text-sm font-semibold text-gray-700 mb-1">Autorizado por</label>
                             <input type="text" id="salida_autorizado" placeholder="Nombre del responsable" required class="w-full border rounded-md p-2 focus:ring-2 focus:ring-red-500">
                         </div>
+                    </div>
 
-                        <div class="md:col-span-2">
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">Descripción del Producto</label>
-                            <input type="text" id="salida_descripcion" placeholder="Se llena automáticamente al elegir clave" required class="w-full border rounded-md p-2 focus:ring-2 focus:ring-red-500">
+                    <!-- TABLA DINÁMICA DE PARTIDAS DE SALIDA -->
+                    <div class="border rounded-md p-4 bg-gray-50 space-y-3">
+                        <div class="flex justify-between items-center border-b pb-2">
+                            <h3 class="text-sm font-bold text-gray-800 uppercase tracking-wide">
+                                <i class="fa-solid fa-list-check text-red-600 mr-2"></i>Claves / Productos a Retirar
+                            </h3>
+                            <button type="button" onclick="agregarPartidaSalida()" class="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded shadow transition flex items-center">
+                                <i class="fa-solid fa-plus mr-1"></i>Agregar Clave
+                            </button>
                         </div>
 
-                        <div class="md:col-span-2">
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">Comentarios / Observaciones de Salida</label>
-                            <textarea id="salida_comentarios" rows="3" placeholder="Detalles o notas adicionales sobre la salida del material..." class="w-full border rounded-md p-2 focus:ring-2 focus:ring-red-500"></textarea>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-xs text-left">
+                                <thead class="bg-gray-200 text-gray-700 font-bold uppercase">
+                                    <tr>
+                                        <th class="p-2 w-1/3">Clave</th>
+                                        <th class="p-2">Descripción</th>
+                                        <th class="p-2 w-28">Medida</th>
+                                        <th class="p-2 w-20 text-center">Cant.</th>
+                                        <th class="p-2 w-10 text-center">Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="contenedor-partidas-salida" class="divide-y divide-gray-200">
+                                    <!-- Las filas dinámicas se insertan con JS -->
+                                </tbody>
+                            </table>
                         </div>
                     </div>
 
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Comentarios / Observaciones de Salida</label>
+                        <textarea id="salida_comentarios" rows="3" placeholder="Detalles o notas adicionales sobre la salida del material..." class="w-full border rounded-md p-2 focus:ring-2 focus:ring-red-500"></textarea>
+                    </div>
+
                     <div class="pt-4 flex justify-end space-x-3">
-                        <button type="reset" class="px-4 py-2 border rounded-md text-gray-600 hover:bg-gray-100">Limpiar</button>
+                        <button type="button" onclick="limpiarFormularioSalida()" class="px-4 py-2 border rounded-md text-gray-600 hover:bg-gray-100">Limpiar</button>
                         <button type="submit" class="px-6 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 font-semibold shadow">
                             Guardar y Generar Orden de Salida
                         </button>
@@ -434,7 +438,7 @@
             </div>
         </div>
 
-        <!-- ==================== VISTA HISTORIAL CON FILTROS Y REPORTE ==================== -->
+        <!-- HISTORIAL CON FILTROS Y REPORTE -->
         <div id="vista-historial" class="hidden space-y-4">
             <div class="flex justify-between items-center">
                 <h2 class="text-2xl font-bold text-capex-dark">Historial General de Movimientos</h2>
@@ -566,7 +570,6 @@
                         <input type="text" id="edit-autorizado" required class="w-full border rounded-md p-2 text-xs focus:ring-2 focus:ring-blue-500">
                     </div>
 
-                    <!-- CAMPOS ESPECÍFICOS PARA INGRESO -->
                     <div id="edit-campo-recuperable" class="hidden">
                         <label class="block text-xs font-semibold text-gray-700 mb-1">¿Es Recuperable?</label>
                         <select id="edit-es-recuperable" onchange="evaluarModalEditarRecuperable()" class="w-full border rounded-md p-2 text-xs focus:ring-2 focus:ring-blue-500">
@@ -579,7 +582,6 @@
                         <input type="text" id="edit-medida-ajustar" class="w-full border rounded-md p-2 text-xs focus:ring-2 focus:ring-blue-500">
                     </div>
 
-                    <!-- CAMPOS ESPECÍFICOS PARA SALIDA -->
                     <div id="edit-campo-concepto" class="hidden md:col-span-2">
                         <label class="block text-xs font-semibold text-gray-700 mb-1">Concepto de Salida</label>
                         <select id="edit-concepto" class="w-full border rounded-md p-2 text-xs focus:ring-2 focus:ring-blue-500">
@@ -603,7 +605,7 @@
         </div>
     </div>
 
-    <!-- ==================== VISTA DE IMPRESIÓN / ORDEN INDIVIDUAL SAE ==================== -->
+    <!-- IMPRESIÓN / ORDEN INDIVIDUAL SAE (TABLA ADAPTADA A MÚLTIPLES PARTIDAS) -->
     <div id="seccion-orden-impresion" class="hidden bg-white p-8 max-w-4xl mx-auto border border-gray-300">
         <div class="border-b-2 border-capex pb-4 mb-6 flex justify-between items-center">
             <div class="flex items-center space-x-4">
@@ -634,7 +636,7 @@
 
         <table class="w-full border-collapse border border-gray-300 text-sm mb-6">
             <thead>
-                <tr class="bg-gray-200 text-capex-dark">
+                <tr class="bg-gray-200 text-capex-dark font-bold">
                     <th class="border border-gray-300 px-2 py-2 text-left">Clave</th>
                     <th class="border border-gray-300 px-2 py-2 text-left">Descripción del Producto</th>
                     <th class="border border-gray-300 px-2 py-2 text-left" id="th-col-3">Modelo</th>
@@ -642,14 +644,8 @@
                     <th class="border border-gray-300 px-2 py-2 text-center">Cant.</th>
                 </tr>
             </thead>
-            <tbody>
-                <tr>
-                    <td class="border border-gray-300 px-2 py-2 font-bold font-mono" id="print-clave"></td>
-                    <td class="border border-gray-300 px-2 py-2" id="print-descripcion"></td>
-                    <td class="border border-gray-300 px-2 py-2" id="print-col-3"></td>
-                    <td class="border border-gray-300 px-2 py-2" id="print-col-4"></td>
-                    <td class="border border-gray-300 px-2 py-2 text-center font-bold" id="print-cantidad"></td>
-                </tr>
+            <tbody id="print-tabla-partidas-body">
+                <!-- Se llenan dinámicamente -->
             </tbody>
         </table>
 
@@ -669,7 +665,7 @@
         </div>
     </div>
 
-    <!-- ==================== VISTA DE IMPRESIÓN REPORTE GENERAL DE HISTORIAL ==================== -->
+    <!-- IMPRESIÓN REPORTE GENERAL DE HISTORIAL -->
     <div id="seccion-reporte-impresion" class="hidden bg-white p-6 max-w-5xl mx-auto">
         <div class="border-b-2 border-capex pb-3 mb-4 flex justify-between items-center">
             <div class="flex items-center space-x-3">
@@ -720,10 +716,8 @@
         const SUPABASE_URL = "https://ncmzdsmuclckujsnkzdx.supabase.co"; 
         const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5jbXpkc211Y2xja3Vqc25remR4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEyMjg4ODMsImV4cCI6MjEwNjgwNDg4M30.6_6V44Yoq5udNQt9Q-hqSdX_KVKrO3wbqbmaI88LJqY";              
         
-        // Inicialización del cliente Supabase
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // Función para convertir YYYY-MM-DD a formato corto DD/MM/YYYY
         function formatearFechaCorta(fechaStr) {
             if (!fechaStr) return '';
             const partes = fechaStr.split('T')[0].split('-');
@@ -789,23 +783,25 @@
         }
 
         function actualizarOpcionesClaves(tipoFormulario) {
-            let catSelectId = tipoFormulario === 'ingreso' ? 'categoria_producto' : 'salida_categoria_producto';
-            let claveSelectId = tipoFormulario === 'ingreso' ? 'clave' : 'salida_clave';
+            if (tipoFormulario === 'ingreso') {
+                const categoria = document.getElementById('categoria_producto').value;
+                const catalogo = obtenerCatalogo(categoria);
+                const selectClave = document.getElementById('clave');
 
-            const categoria = document.getElementById(catSelectId).value;
-            const catalogo = obtenerCatalogo(categoria);
-            const selectClave = document.getElementById(claveSelectId);
-
-            selectClave.innerHTML = '<option value="" disabled selected>Seleccione una clave...</option>';
-            for (const clave in catalogo) {
-                const opt = document.createElement('option');
-                opt.value = clave;
-                opt.textContent = `${clave} - ${catalogo[clave].descripcion}`;
-                selectClave.appendChild(opt);
+                selectClave.innerHTML = '<option value="" disabled selected>Seleccione una clave...</option>';
+                for (const clave in catalogo) {
+                    const opt = document.createElement('option');
+                    opt.value = clave;
+                    opt.textContent = `${clave} - ${catalogo[clave].descripcion}`;
+                    selectClave.appendChild(opt);
+                }
+                autocompletarIngreso();
+            } else if (tipoFormulario === 'salida') {
+                // Al cambiar la categoría en Salidas, reiniciar las filas con el catálogo correspondiente
+                const contenedor = document.getElementById('contenedor-partidas-salida');
+                contenedor.innerHTML = '';
+                agregarPartidaSalida();
             }
-
-            if (tipoFormulario === 'ingreso') autocompletarIngreso();
-            else autocompletarSalida();
         }
 
         function autocompletarIngreso() {
@@ -824,18 +820,78 @@
             }
         }
 
-        function autocompletarSalida() {
+        // --- FUNCIONES DINÁMICAS DE PARTIDAS DE SALIDA ---
+        function agregarPartidaSalida() {
             const categoria = document.getElementById('salida_categoria_producto').value;
             const catalogo = obtenerCatalogo(categoria);
-            const claveSelect = document.getElementById('salida_clave').value;
-            const item = catalogo[claveSelect];
-            if (item) {
-                document.getElementById('salida_descripcion').value = item.descripcion;
-                document.getElementById('salida_medida').value = item.medida;
-            } else {
-                document.getElementById('salida_descripcion').value = '';
-                document.getElementById('salida_medida').value = '';
+            const contenedor = document.getElementById('contenedor-partidas-salida');
+
+            const tr = document.createElement('tr');
+            tr.className = "fila-partida-salida";
+
+            let optionsClaves = '<option value="" disabled selected>Seleccionar clave...</option>';
+            for (const clave in catalogo) {
+                optionsClaves += `<option value="${clave}">${clave} - ${catalogo[clave].descripcion}</option>`;
             }
+
+            tr.innerHTML = `
+                <td class="p-1">
+                    <select onchange="autocompletarFilaSalida(this)" required class="salida-clave-input w-full border rounded p-1 text-xs font-mono bg-white focus:ring-1 focus:ring-red-500">
+                        ${optionsClaves}
+                    </select>
+                </td>
+                <td class="p-1">
+                    <input type="text" readonly class="salida-desc-input w-full border rounded p-1 text-xs bg-gray-100 text-gray-600">
+                </td>
+                <td class="p-1">
+                    <input type="text" required class="salida-medida-input w-full border rounded p-1 text-xs focus:ring-1 focus:ring-red-500">
+                </td>
+                <td class="p-1">
+                    <input type="number" min="1" value="1" required class="salida-cant-input w-full border rounded p-1 text-xs text-center font-bold focus:ring-1 focus:ring-red-500">
+                </td>
+                <td class="p-1 text-center">
+                    <button type="button" onclick="eliminarFilaSalida(this)" title="Quitar Fila" class="text-red-500 hover:text-red-700 font-bold px-2 py-1">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                </td>
+            `;
+
+            contenedor.appendChild(tr);
+        }
+
+        function eliminarFilaSalida(btn) {
+            const filas = document.querySelectorAll('.fila-partida-salida');
+            if (filas.length <= 1) {
+                alert("Debe haber al menos una clave para generar la salida.");
+                return;
+            }
+            btn.closest('tr').remove();
+        }
+
+        function autocompletarFilaSalida(selectElem) {
+            const fila = selectElem.closest('tr');
+            const categoria = document.getElementById('salida_categoria_producto').value;
+            const catalogo = obtenerCatalogo(categoria);
+            const clave = selectElem.value;
+            const item = catalogo[clave];
+
+            const inputDesc = fila.querySelector('.salida-desc-input');
+            const inputMedida = fila.querySelector('.salida-medida-input');
+
+            if (item) {
+                inputDesc.value = item.descripcion;
+                inputMedida.value = item.medida;
+            } else {
+                inputDesc.value = '';
+                inputMedida.value = '';
+            }
+        }
+
+        function limpiarFormularioSalida() {
+            document.getElementById('form-salida').reset();
+            document.getElementById('salida_fecha').valueAsDate = new Date();
+            actualizarOpcionesClaves('salida');
+            generarFoliosConsecutivos();
         }
 
         let movimientos = [];
@@ -870,11 +926,12 @@
         }
 
         function generarFoliosConsecutivos() {
-            const ingresos = movimientos.filter(m => m.tipo === 'INGRESO');
-            const salidas = movimientos.filter(m => m.tipo === 'SALIDA');
+            // Calcular folios basados en folios únicos para no sobredimensionar con partidas múltiples
+            const foliosIngreso = new Set(movimientos.filter(m => m.tipo === 'INGRESO').map(m => m.folio_sae));
+            const foliosSalida = new Set(movimientos.filter(m => m.tipo === 'SALIDA').map(m => m.folio_sae));
 
-            const numIngreso = ingresos.length + 1;
-            const numSalida = salidas.length + 1;
+            const numIngreso = foliosIngreso.size + 1;
+            const numSalida = foliosSalida.size + 1;
 
             document.getElementById('folio_sae').value = `ING-${String(numIngreso).padStart(5, '0')}`;
             document.getElementById('salida_folio').value = `SAL-${String(numSalida).padStart(5, '0')}`;
@@ -973,7 +1030,7 @@
                     movimientos.unshift(registroInsertado);
                 }
 
-                imprimirOrden(nuevoItem);
+                imprimirOrdenGrupo([nuevoItem]);
 
                 document.getElementById('form-ingreso').reset();
                 document.getElementById('fecha').valueAsDate = new Date();
@@ -986,69 +1043,91 @@
             }
         }
 
+        // FUNCIÓN GUARDAR SALIDA ADAPTADA A MÚLTIPLES PARTIDAS
         async function guardarSalida(e) {
             e.preventDefault();
             const categoria = document.getElementById('salida_categoria_producto').value;
-            const clave = document.getElementById('salida_clave').value;
+            const fecha = document.getElementById('salida_fecha').value;
+            const folio = document.getElementById('salida_folio').value;
+            const concepto = document.getElementById('salida_concepto').value;
+            const autorizado = document.getElementById('salida_autorizado').value;
+            const comentarios = document.getElementById('salida_comentarios').value.trim() || 'Sin comentarios registrados.';
+            
             const catalogo = obtenerCatalogo(categoria);
-            const itemCatalogo = catalogo[clave];
-            const cantidad = parseInt(document.getElementById('salida_cantidad').value);
+            const filasPartidas = document.querySelectorAll('.fila-partida-salida');
 
-            const nuevoItem = {
-                categoria: categoria,
-                tipo: 'SALIDA',
-                fecha: document.getElementById('salida_fecha').value,
-                folio_sae: document.getElementById('salida_folio').value,
-                concepto: document.getElementById('salida_concepto').value,
-                clave: clave,
-                modelo: itemCatalogo ? itemCatalogo.modelo : '',
-                medida: document.getElementById('salida_medida').value.trim(),
-                descripcion: document.getElementById('salida_descripcion').value,
-                comentarios: document.getElementById('salida_comentarios').value.trim() || 'Sin comentarios registrados.',
-                cantidad: cantidad,
-                autorizado_por: document.getElementById('salida_autorizado').value
-            };
+            if (filasPartidas.length === 0) {
+                alert("Debe agregar al menos una partida a la salida.");
+                return;
+            }
 
-            const payloadLimpio = {
-                categoria: nuevoItem.categoria,
-                tipo: nuevoItem.tipo,
-                fecha: nuevoItem.fecha,
-                folio_sae: nuevoItem.folio_sae,
-                motivo: nuevoItem.concepto,
-                clave: nuevoItem.clave,
-                medida: nuevoItem.medida,
-                descripcion: nuevoItem.descripcion,
-                observaciones: nuevoItem.comentarios,
-                cantidad: nuevoItem.cantidad,
-                autorizado_por: nuevoItem.autorizado_por
-            };
+            const listaSalidasPayload = [];
+            const listaItemsImpresion = [];
+
+            filasPartidas.forEach(fila => {
+                const clave = fila.querySelector('.salida-clave-input').value;
+                const descripcion = fila.querySelector('.salida-desc-input').value;
+                const medida = fila.querySelector('.salida-medida-input').value.trim();
+                const cantidad = parseInt(fila.querySelector('.salida-cant-input').value);
+                const itemCat = catalogo[clave] || {};
+
+                if (clave && cantidad > 0) {
+                    listaSalidasPayload.push({
+                        categoria: categoria,
+                        tipo: 'SALIDA',
+                        fecha: fecha,
+                        folio_sae: folio,
+                        motivo: concepto,
+                        clave: clave,
+                        medida: medida,
+                        descripcion: descripcion,
+                        observaciones: comentarios,
+                        cantidad: cantidad,
+                        autorizado_por: autorizado
+                    });
+
+                    listaItemsImpresion.push({
+                        categoria: categoria,
+                        tipo: 'SALIDA',
+                        fecha: fecha,
+                        folio_sae: folio,
+                        concepto: concepto,
+                        clave: clave,
+                        modelo: itemCat.modelo || 'N/A',
+                        medida: medida,
+                        descripcion: descripcion,
+                        comentarios: comentarios,
+                        cantidad: cantidad,
+                        autorizado_por: autorizado
+                    });
+                }
+            });
 
             try {
                 const { data, error } = await supabaseClient
                     .from('movimientos_merma')
-                    .insert([payloadLimpio])
+                    .insert(listaSalidasPayload)
                     .select();
 
                 if (error) throw error;
 
                 if (data && data.length > 0) {
-                    const registroInsertado = { 
-                        ...data[0], 
-                        modelo: nuevoItem.modelo, 
-                        concepto: nuevoItem.concepto, 
-                        comentarios: nuevoItem.comentarios 
-                    };
-                    movimientos.unshift(registroInsertado);
+                    data.forEach(dbItem => {
+                        const original = listaItemsImpresion.find(i => i.clave === dbItem.clave) || {};
+                        movimientos.unshift({
+                            ...dbItem,
+                            modelo: original.modelo,
+                            concepto: original.concepto,
+                            comentarios: original.comentarios
+                        });
+                    });
                 }
 
-                imprimirOrden(nuevoItem);
+                imprimirOrdenGrupo(listaItemsImpresion);
 
-                document.getElementById('form-salida').reset();
-                document.getElementById('salida_fecha').valueAsDate = new Date();
-                actualizarOpcionesClaves('salida');
-                generarFoliosConsecutivos();
+                limpiarFormularioSalida();
             } catch (err) {
-                console.error("Error al guardar salida:", err.message);
+                console.error("Error al guardar la salida múltiple:", err.message);
                 alert("Ocurrió un error al guardar en Supabase: " + err.message);
             }
         }
@@ -1078,7 +1157,7 @@
             }
         }
 
-        // --- FUNCIONES PARA LA EDICIÓN DE REGISTROS ---
+        // EDICIÓN DE REGISTROS
         function abrirModalEditar(id) {
             const item = movimientos.find(m => String(m.id) === String(id));
             if (!item) return;
@@ -1211,18 +1290,36 @@
             }
         }
 
-        function imprimirOrden(item) {
-            document.getElementById('print-folio').innerText = item.folio_sae;
-            document.getElementById('print-fecha').innerText = `Fecha: ${formatearFechaCorta(item.fecha)}`;
-            document.getElementById('print-clave').innerText = item.clave;
-            document.getElementById('print-descripcion').innerText = item.descripcion;
-            document.getElementById('print-cantidad').innerText = item.cantidad;
-            document.getElementById('print-autorizo').innerText = item.autorizado_por;
+        // FUNCIÓN DE IMPRESIÓN ADAPTADA A GRUPOS DE PARTIDAS
+        function imprimirOrdenGrupo(items) {
+            if (!items || items.length === 0) return;
+
+            const primerItem = items[0];
+            const catNombre = primerItem.categoria || 'Hoja';
+            const esIngreso = primerItem.tipo === 'INGRESO';
+
+            document.getElementById('print-folio').innerText = primerItem.folio_sae;
+            document.getElementById('print-fecha').innerText = `Fecha: ${formatearFechaCorta(primerItem.fecha)}`;
+            document.getElementById('print-autorizo').innerText = primerItem.autorizado_por;
+
+            const tablaBody = document.getElementById('print-tabla-partidas-body');
+            tablaBody.innerHTML = '';
+
+            items.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="border border-gray-300 px-2 py-2 font-bold font-mono">${item.clave}</td>
+                    <td class="border border-gray-300 px-2 py-2">${item.descripcion}</td>
+                    <td class="border border-gray-300 px-2 py-2">${item.modelo || 'N/A'}</td>
+                    <td class="border border-gray-300 px-2 py-2">${item.medida}</td>
+                    <td class="border border-gray-300 px-2 py-2 text-center font-bold">${item.cantidad}</td>
+                `;
+                tablaBody.appendChild(tr);
+            });
 
             const gridDetalles = document.getElementById('print-grid-detalles');
-            const catNombre = item.categoria || 'Hoja';
 
-            if (item.tipo === 'INGRESO') {
+            if (esIngreso) {
                 document.getElementById('print-titulo-orden').innerText = `ORDEN DE INGRESO (${catNombre.toUpperCase()}S SEGUNDA)`;
                 
                 if (catNombre === 'Puerta') {
@@ -1232,30 +1329,20 @@
                     document.getElementById('print-subtitulo-orden').innerText = "Traspaso de Entrada: Almacén 3 -> Almacén 4 (CAPEX)";
                     document.getElementById('print-instruccion-sae').innerHTML = "Capturar movimiento de <strong>Traspaso Interno en SAE</strong> de <u>Almacén 3</u> a <u>Almacén 4 (Merma / Segunda)</u>.";
                 }
-                
-                document.getElementById('th-col-3').innerText = "Modelo";
-                document.getElementById('th-col-4').innerText = "Medida Orig.";
-                document.getElementById('print-col-3').innerText = item.modelo || 'N/A';
-                document.getElementById('print-col-4').innerText = item.medida;
 
                 gridDetalles.innerHTML = `
                     <div><span class="font-bold text-gray-700">Categoría:</span> <span class="font-bold uppercase ml-2">${catNombre}</span></div>
-                    <div><span class="font-bold text-gray-700">¿Es Recuperable / Remate?:</span> <span class="font-bold uppercase ml-2">${item.es_recuperable}</span></div>
-                    <div class="col-span-2"><span class="font-bold text-gray-700">Ajuste / Observación:</span> <span class="ml-2 font-semibold">${item.medida_ajustar}</span></div>
+                    <div><span class="font-bold text-gray-700">¿Es Recuperable / Remate?:</span> <span class="font-bold uppercase ml-2">${primerItem.es_recuperable}</span></div>
+                    <div class="col-span-2"><span class="font-bold text-gray-700">Ajuste / Observación:</span> <span class="ml-2 font-semibold">${primerItem.medida_ajustar}</span></div>
                 `;
             } else {
                 document.getElementById('print-titulo-orden').innerText = `ORDEN DE SALIDA (${catNombre.toUpperCase()}S SEGUNDA)`;
                 document.getElementById('print-subtitulo-orden').innerText = "Movimiento de Salida - CAPEX Puertas de Madera";
-                document.getElementById('print-instruccion-sae').innerHTML = `Capturar movimiento de <strong>Salida en SAE</strong> de <u>Almacén 4 (Merma / Segunda)</u> por el concepto: <strong>${item.concepto || item.motivo}</strong>.`;
-
-                document.getElementById('th-col-3').innerText = "Categoría";
-                document.getElementById('th-col-4').innerText = "Medida Retirada";
-                document.getElementById('print-col-3').innerText = catNombre;
-                document.getElementById('print-col-4').innerText = item.medida;
+                document.getElementById('print-instruccion-sae').innerHTML = `Capturar movimiento de <strong>Salida en SAE</strong> de <u>Almacén 4 (Merma / Segunda)</u> por el concepto: <strong>${primerItem.concepto || primerItem.motivo}</strong>.`;
 
                 gridDetalles.innerHTML = `
-                    <div class="col-span-2"><span class="font-bold text-gray-700">Concepto Oficial de Salida:</span> <span class="font-bold text-red-700 ml-2 uppercase">${item.concepto || item.motivo}</span></div>
-                    <div class="col-span-2 border-t pt-2 mt-1"><span class="font-bold text-gray-700">Comentarios / Observaciones:</span> <p class="mt-1 text-gray-800 bg-white p-2 border rounded">${item.comentarios || item.observaciones || 'Sin observaciones'}</p></div>
+                    <div class="col-span-2"><span class="font-bold text-gray-700">Concepto Oficial de Salida:</span> <span class="font-bold text-red-700 ml-2 uppercase">${primerItem.concepto || primerItem.motivo}</span></div>
+                    <div class="col-span-2 border-t pt-2 mt-1"><span class="font-bold text-gray-700">Comentarios / Observaciones:</span> <p class="mt-1 text-gray-800 bg-white p-2 border rounded">${primerItem.comentarios || primerItem.observaciones || 'Sin observaciones'}</p></div>
                 `;
             }
 
@@ -1305,7 +1392,6 @@
                         const sal = salidas.filter(m => m.medida === medida).reduce((s, m) => s + Number(m.cantidad || 0), 0);
                         const stockMedida = ing - sal;
 
-                        // Fila Principal de Medida
                         const tr = document.createElement('tr');
                         tr.className = "border-b hover:bg-emerald-50 cursor-pointer transition";
                         tr.onclick = () => toggleDetalleMedida(medida);
@@ -1320,7 +1406,6 @@
                         `;
                         tablaMedidas.appendChild(tr);
 
-                        // Fila Detalle (Desglose de Hojas por esta medida)
                         const trDetalle = document.createElement('tr');
                         trDetalle.id = `detalle-medida-${medida.replace(/\s+/g, '-')}`;
                         trDetalle.className = "hidden bg-gray-50 border-b";
@@ -1576,8 +1661,15 @@
         }
 
         function reimprimirPorFolio(folio) {
-            const item = movimientos.find(m => m.folio_sae === folio);
-            if (item) imprimirOrden(item);
+            const items = movimientos.filter(m => m.folio_sae === folio);
+            if (items.length > 0) {
+                const mapeados = items.map(m => ({
+                    ...m,
+                    concepto: m.concepto || m.motivo,
+                    comentarios: m.comentarios || m.observaciones
+                }));
+                imprimirOrdenGrupo(mapeados);
+            }
         }
 
         function imprimirReporteGeneral() {
@@ -1648,9 +1740,6 @@
             seccionReporte.classList.add('hidden');
         }
 
-        // --- FUNCIONES INTERACTIVAS NUEVAS ---
-
-        // Función para desplegar/ocultar las hojas asociadas a una medida
         function toggleDetalleMedida(medida) {
             const idSaneado = medida.replace(/\s+/g, '-');
             const trDetalle = document.getElementById(`detalle-medida-${idSaneado}`);
@@ -1664,7 +1753,6 @@
             }
         }
 
-        // Función para ver los movimientos de una clave directamente en el Historial
         function verMovimientosClave(clave) {
             cambiarPestana('historial');
             limpiarFiltrosHistorial();
