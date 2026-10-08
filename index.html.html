@@ -352,7 +352,7 @@
             </div>
         </div>
 
-        <!-- FORMULARIO DE SALIDA (MODIFICADO PARA MÚLTIPLES CLAVES) -->
+        <!-- FORMULARIO DE SALIDA (MODIFICADO PARA MÚLTIPLES CLAVES Y CONDICIÓN RECUPERABLE) -->
         <div id="vista-nueva-salida" class="hidden">
             <div class="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-md border-t-4 border-red-600">
                 <h2 class="text-2xl font-bold mb-6 text-red-800 border-b pb-2">
@@ -409,10 +409,11 @@
                             <table class="w-full text-xs text-left">
                                 <thead class="bg-gray-200 text-gray-700 font-bold uppercase">
                                     <tr>
-                                        <th class="p-2 w-1/3">Clave</th>
+                                        <th class="p-2 w-1/4">Clave</th>
                                         <th class="p-2">Descripción</th>
-                                        <th class="p-2 w-28">Medida</th>
-                                        <th class="p-2 w-20 text-center">Cant.</th>
+                                        <th class="p-2 w-24">Medida</th>
+                                        <th class="p-2 w-32">Condición</th>
+                                        <th class="p-2 w-16 text-center">Cant.</th>
                                         <th class="p-2 w-10 text-center">Acción</th>
                                     </tr>
                                 </thead>
@@ -641,6 +642,7 @@
                     <th class="border border-gray-300 px-2 py-2 text-left">Descripción del Producto</th>
                     <th class="border border-gray-300 px-2 py-2 text-left" id="th-col-3">Modelo</th>
                     <th class="border border-gray-300 px-2 py-2 text-left" id="th-col-4">Medida</th>
+                    <th class="border border-gray-300 px-2 py-2 text-center">Recup.</th>
                     <th class="border border-gray-300 px-2 py-2 text-center">Cant.</th>
                 </tr>
             </thead>
@@ -797,7 +799,6 @@
                 }
                 autocompletarIngreso();
             } else if (tipoFormulario === 'salida') {
-                // Al cambiar la categoría en Salidas, reiniciar las filas con el catálogo correspondiente
                 const contenedor = document.getElementById('contenedor-partidas-salida');
                 contenedor.innerHTML = '';
                 agregarPartidaSalida();
@@ -845,6 +846,12 @@
                 </td>
                 <td class="p-1">
                     <input type="text" required class="salida-medida-input w-full border rounded p-1 text-xs focus:ring-1 focus:ring-red-500">
+                </td>
+                <td class="p-1">
+                    <select class="salida-recuperable-input w-full border rounded p-1 text-xs bg-white focus:ring-1 focus:ring-red-500 font-semibold">
+                        <option value="No">No Recuperable (Scrap)</option>
+                        <option value="Sí">Recuperable / Reusable</option>
+                    </select>
                 </td>
                 <td class="p-1">
                     <input type="number" min="1" value="1" required class="salida-cant-input w-full border rounded p-1 text-xs text-center font-bold focus:ring-1 focus:ring-red-500">
@@ -926,7 +933,6 @@
         }
 
         function generarFoliosConsecutivos() {
-            // Calcular folios basados en folios únicos para no sobredimensionar con partidas múltiples
             const foliosIngreso = new Set(movimientos.filter(m => m.tipo === 'INGRESO').map(m => m.folio_sae));
             const foliosSalida = new Set(movimientos.filter(m => m.tipo === 'SALIDA').map(m => m.folio_sae));
 
@@ -1043,7 +1049,7 @@
             }
         }
 
-        // FUNCIÓN GUARDAR SALIDA ADAPTADA A MÚLTIPLES PARTIDAS
+        // FUNCIÓN GUARDAR SALIDA ADAPTADA A MÚLTIPLES PARTIDAS Y CONDICIÓN RECUPERABLE
         async function guardarSalida(e) {
             e.preventDefault();
             const categoria = document.getElementById('salida_categoria_producto').value;
@@ -1068,6 +1074,7 @@
                 const clave = fila.querySelector('.salida-clave-input').value;
                 const descripcion = fila.querySelector('.salida-desc-input').value;
                 const medida = fila.querySelector('.salida-medida-input').value.trim();
+                const esRecuperable = fila.querySelector('.salida-recuperable-input').value === 'Sí';
                 const cantidad = parseInt(fila.querySelector('.salida-cant-input').value);
                 const itemCat = catalogo[clave] || {};
 
@@ -1081,6 +1088,7 @@
                         clave: clave,
                         medida: medida,
                         descripcion: descripcion,
+                        es_recuperable: esRecuperable,
                         observaciones: comentarios,
                         cantidad: cantidad,
                         autorizado_por: autorizado
@@ -1095,6 +1103,7 @@
                         clave: clave,
                         modelo: itemCat.modelo || 'N/A',
                         medida: medida,
+                        es_recuperable: esRecuperable ? 'Sí' : 'No',
                         descripcion: descripcion,
                         comentarios: comentarios,
                         cantidad: cantidad,
@@ -1124,7 +1133,6 @@
                 }
 
                 imprimirOrdenGrupo(listaItemsImpresion);
-
                 limpiarFormularioSalida();
             } catch (err) {
                 console.error("Error al guardar la salida múltiple:", err.message);
@@ -1176,14 +1184,15 @@
             document.getElementById('edit-clave').value = item.clave || '';
 
             const esIngreso = item.tipo === 'INGRESO';
-            document.getElementById('edit-campo-recuperable').classList.toggle('hidden', !esIngreso);
+            document.getElementById('edit-campo-recuperable').classList.toggle('hidden', false);
             document.getElementById('edit-campo-medida-ajustar').classList.toggle('hidden', !esIngreso);
             document.getElementById('edit-campo-concepto').classList.toggle('hidden', esIngreso);
             document.getElementById('edit-campo-observaciones').classList.toggle('hidden', esIngreso);
 
+            const recup = typeof item.es_recuperable === 'boolean' ? (item.es_recuperable ? 'Sí' : 'No') : (item.es_recuperable || 'No');
+            document.getElementById('edit-es-recuperable').value = recup;
+
             if (esIngreso) {
-                const recup = typeof item.es_recuperable === 'boolean' ? (item.es_recuperable ? 'Sí' : 'No') : (item.es_recuperable || 'No');
-                document.getElementById('edit-es-recuperable').value = recup;
                 document.getElementById('edit-medida-ajustar').value = item.medida_ajustar || '';
                 evaluarModalEditarRecuperable();
             } else {
@@ -1242,6 +1251,8 @@
             const catalogo = obtenerCatalogo(categoria);
             const itemCat = catalogo[clave] || {};
 
+            const esRecup = document.getElementById('edit-es-recuperable').value;
+
             let payload = {
                 categoria: categoria,
                 fecha: document.getElementById('edit-fecha').value,
@@ -1249,12 +1260,11 @@
                 medida: document.getElementById('edit-medida').value.trim(),
                 cantidad: parseInt(document.getElementById('edit-cantidad').value),
                 descripcion: document.getElementById('edit-descripcion').value.trim(),
+                es_recuperable: esRecup === 'Sí',
                 autorizado_por: document.getElementById('edit-autorizado').value.trim()
             };
 
             if (tipo === 'INGRESO') {
-                const esRecup = document.getElementById('edit-es-recuperable').value;
-                payload.es_recuperable = esRecup === 'Sí';
                 payload.medida_ajustar = esRecup === 'Sí' ? document.getElementById('edit-medida-ajustar').value.trim() : 'N/A';
             } else {
                 payload.motivo = document.getElementById('edit-concepto').value;
@@ -1307,11 +1317,14 @@
 
             items.forEach(item => {
                 const tr = document.createElement('tr');
+                const recupTexto = typeof item.es_recuperable === 'boolean' ? (item.es_recuperable ? 'Sí' : 'No') : (item.es_recuperable || 'No');
+
                 tr.innerHTML = `
                     <td class="border border-gray-300 px-2 py-2 font-bold font-mono">${item.clave}</td>
                     <td class="border border-gray-300 px-2 py-2">${item.descripcion}</td>
                     <td class="border border-gray-300 px-2 py-2">${item.modelo || 'N/A'}</td>
                     <td class="border border-gray-300 px-2 py-2">${item.medida}</td>
+                    <td class="border border-gray-300 px-2 py-2 text-center font-bold">${recupTexto}</td>
                     <td class="border border-gray-300 px-2 py-2 text-center font-bold">${item.cantidad}</td>
                 `;
                 tablaBody.appendChild(tr);
@@ -1372,7 +1385,10 @@
             const totalIngresado = ingresos.reduce((s, m) => s + Number(m.cantidad || 0), 0);
             const totalSalidas = salidas.reduce((s, m) => s + Number(m.cantidad || 0), 0);
             const stockActual = totalIngresado - totalSalidas;
-            const recuperablesTotal = ingresos.filter(m => m.es_recuperable === true || m.es_recuperable === 'Sí').reduce((s, m) => s + Number(m.cantidad || 0), 0);
+
+            const recupIngresos = ingresos.filter(m => m.es_recuperable === true || m.es_recuperable === 'Sí').reduce((s, m) => s + Number(m.cantidad || 0), 0);
+            const recupSalidas = salidas.filter(m => m.es_recuperable === true || m.es_recuperable === 'Sí').reduce((s, m) => s + Number(m.cantidad || 0), 0);
+            const recuperablesTotal = Math.max(0, recupIngresos - recupSalidas);
 
             document.getElementById(`kpi-${tipo}-ingresado`).innerText = `${totalIngresado.toLocaleString()} Pzas`;
             document.getElementById(`kpi-${tipo}-salidas`).innerText = `${totalSalidas.toLocaleString()} Pzas`;
@@ -1629,7 +1645,7 @@
                     <td class="px-3 py-3 font-semibold text-capex-dark font-mono">${m.folio_sae}</td>
                     <td class="px-3 py-3 font-bold font-mono">${m.clave}</td>
                     <td class="px-3 py-3">${m.medida || 'N/A'}</td>
-                    <td class="px-3 py-3 font-semibold">${esIngreso ? 'Recup: ' + recupTexto : (m.concepto || m.motivo)}</td>
+                    <td class="px-3 py-3 font-semibold">${esIngreso ? 'Recup: ' + recupTexto : (m.concepto || m.motivo) + ' (Recup: ' + recupTexto + ')'}</td>
                     <td class="px-3 py-3">${m.descripcion}</td>
                     <td class="px-3 py-3 text-center font-bold ${esIngreso ? 'text-emerald-600' : 'text-red-600'}">
                         ${esIngreso ? '+' : '-'}${m.cantidad}
@@ -1722,7 +1738,7 @@
                         <td class="border border-gray-300 px-2 py-1 font-mono">${m.folio_sae}</td>
                         <td class="border border-gray-300 px-2 py-1 font-mono font-bold">${m.clave}</td>
                         <td class="border border-gray-300 px-2 py-1">${m.medida || 'N/A'}</td>
-                        <td class="border border-gray-300 px-2 py-1">${esIngreso ? 'Recup: ' + recupTexto : (m.concepto || m.motivo)}</td>
+                        <td class="border border-gray-300 px-2 py-1">${esIngreso ? 'Recup: ' + recupTexto : (m.concepto || m.motivo) + ' (Recup: ' + recupTexto + ')'}</td>
                         <td class="border border-gray-300 px-2 py-1">${m.descripcion}</td>
                         <td class="border border-gray-300 px-2 py-1 text-center font-bold ${esIngreso ? 'text-emerald-700' : 'text-red-700'}">${esIngreso ? '+' : '-'}${m.cantidad}</td>
                     `;
