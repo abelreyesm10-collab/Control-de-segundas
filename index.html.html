@@ -158,7 +158,7 @@
             </div>
 
             <div class="bg-white p-5 rounded-lg shadow">
-                <h2 class="text-lg font-bold text-capex-dark mb-4"><i class="fa-solid fa-chart-pie text-capex mr-2"></i>Salidas de Hojas por Concepto</h2>
+                <h2 class="text-lg font-bold text-capex-dark mb-4"><i class="fa-solid fa-chart-pie text-capex mr-2"></i>Salidas de Hojas por Concepto / Traspaso</h2>
                 <div class="h-64 flex justify-center">
                     <canvas id="graficoConceptoSalidas"></canvas>
                 </div>
@@ -259,7 +259,7 @@
             </div>
 
             <div class="bg-white p-5 rounded-lg shadow">
-                <h2 class="text-lg font-bold text-capex-dark mb-4"><i class="fa-solid fa-chart-pie text-amber-600 mr-2"></i>Distribución de Salidas de Puertas por Concepto</h2>
+                <h2 class="text-lg font-bold text-capex-dark mb-4"><i class="fa-solid fa-chart-pie text-amber-600 mr-2"></i>Distribución de Salidas y Traspasos de Puertas</h2>
                 <div class="h-64 flex justify-center">
                     <canvas id="graficoPuertasSalidas"></canvas>
                 </div>
@@ -352,11 +352,11 @@
             </div>
         </div>
 
-        <!-- FORMULARIO DE SALIDA (MODIFICADO PARA MÚLTIPLES CLAVES Y CONDICIÓN RECUPERABLE) -->
+        <!-- FORMULARIO DE SALIDA -->
         <div id="vista-nueva-salida" class="hidden">
             <div class="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-md border-t-4 border-red-600">
                 <h2 class="text-2xl font-bold mb-6 text-red-800 border-b pb-2">
-                    <i class="fa-solid fa-arrow-right-from-bracket mr-2 text-red-600"></i>Registrar Salida de Almacén (Descuento Almacén 4)
+                    <i class="fa-solid fa-arrow-right-from-bracket mr-2 text-red-600"></i>Registrar Salida / Traspaso de Almacén (Descuento Almacén 4)
                 </h2>
                 
                 <form id="form-salida" onsubmit="guardarSalida(event)" class="space-y-4">
@@ -378,13 +378,15 @@
                         </div>
 
                         <div class="md:col-span-2 bg-red-50 p-4 border border-red-200 rounded-md">
-                            <label class="block text-sm font-bold text-red-900 mb-1">Concepto de Salida</label>
+                            <label class="block text-sm font-bold text-red-900 mb-1">Concepto de Salida / Traspaso</label>
                             <select id="salida_concepto" required class="w-full border border-red-300 rounded-md p-2 bg-white font-semibold text-red-800 focus:ring-2 focus:ring-red-500">
-                                <option value="" disabled selected>Seleccione el concepto de salida...</option>
+                                <option value="" disabled selected>Seleccione el concepto de salida o traspaso...</option>
                                 <option value="Perdida">Pérdida (Scrap / Desecho Definitivo)</option>
                                 <option value="Salida a fabrica">Salida a fábrica (Reingreso / Retrabajo)</option>
                                 <option value="Salida empaque">Salida empaque</option>
                                 <option value="Venta de Segunda">Venta de Segunda / Remate</option>
+                                <option value="Traspaso Almacen 4 a Almacen 3">Traspaso (Del Almacén 4 al Almacén 3)</option>
+                                <option value="Traspaso Almacen 3 a Almacen 4">Traspaso (Del Almacén 3 al Almacén 4)</option>
                             </select>
                         </div>
 
@@ -418,7 +420,6 @@
                                     </tr>
                                 </thead>
                                 <tbody id="contenedor-partidas-salida" class="divide-y divide-gray-200">
-                                    <!-- Las filas dinámicas se insertan con JS -->
                                 </tbody>
                             </table>
                         </div>
@@ -448,7 +449,7 @@
                 </button>
             </div>
             
-            <div class="bg-white p-4 rounded-lg shadow grid grid-cols-1 sm:grid-cols-2 md:grid-cols-6 gap-3 items-end">
+            <div class="bg-white p-4 rounded-lg shadow grid grid-cols-1 sm:grid-cols-2 md:grid-cols-7 gap-3 items-end">
                 <div>
                     <label class="block text-xs font-semibold text-gray-700 mb-1">Categoría</label>
                     <select id="filtro-categoria" onchange="renderizarHistorial()" class="w-full border rounded-md p-2 text-xs bg-white focus:ring-2 focus:ring-capex">
@@ -466,13 +467,23 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-gray-700 mb-1">Concepto Salida</label>
+                    <label class="block text-xs font-semibold text-gray-700 mb-1">Recuperable?</label>
+                    <select id="filtro-recuperable" onchange="renderizarHistorial()" class="w-full border rounded-md p-2 text-xs bg-white focus:ring-2 focus:ring-capex">
+                        <option value="">Todos</option>
+                        <option value="Sí">Sí (Recuperable)</option>
+                        <option value="No">No (Scrap)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 mb-1">Concepto / Traspaso</label>
                     <select id="filtro-concepto" onchange="renderizarHistorial()" class="w-full border rounded-md p-2 text-xs bg-white focus:ring-2 focus:ring-capex">
                         <option value="">Todos los conceptos</option>
                         <option value="Perdida">Pérdida (Desecho)</option>
                         <option value="Salida a fabrica">Salida a fábrica</option>
                         <option value="Salida empaque">Salida empaque</option>
                         <option value="Venta de Segunda">Venta de Segunda</option>
+                        <option value="Traspaso Almacen 4 a Almacen 3">Traspaso Alm. 4 ➔ Alm. 3</option>
+                        <option value="Traspaso Almacen 3 a Almacen 4">Traspaso Alm. 3 ➔ Alm. 4</option>
                     </select>
                 </div>
                 <div>
@@ -513,6 +524,13 @@
                         </tr>
                     </thead>
                     <tbody id="tabla-historial-body"></tbody>
+                    <tfoot class="bg-gray-100 font-bold text-gray-800 border-t-2">
+                        <tr>
+                            <td colspan="8" class="px-3 py-3 text-right">Balance Neto de Piezas Filtradas:</td>
+                            <td id="total-piezas-filtradas" class="px-3 py-3 text-center text-base">0 Pzas</td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
                 </table>
             </div>
         </div>
@@ -584,12 +602,14 @@
                     </div>
 
                     <div id="edit-campo-concepto" class="hidden md:col-span-2">
-                        <label class="block text-xs font-semibold text-gray-700 mb-1">Concepto de Salida</label>
+                        <label class="block text-xs font-semibold text-gray-700 mb-1">Concepto de Salida / Traspaso</label>
                         <select id="edit-concepto" class="w-full border rounded-md p-2 text-xs focus:ring-2 focus:ring-blue-500">
                             <option value="Perdida">Pérdida (Scrap / Desecho Definitivo)</option>
                             <option value="Salida a fabrica">Salida a fábrica (Reingreso / Retrabajo)</option>
                             <option value="Salida empaque">Salida empaque</option>
                             <option value="Venta de Segunda">Venta de Segunda / Remate</option>
+                            <option value="Traspaso Almacen 4 a Almacen 3">Traspaso (Alm. 4 a Alm. 3)</option>
+                            <option value="Traspaso Almacen 3 a Almacen 4">Traspaso (Alm. 3 a Alm. 4)</option>
                         </select>
                     </div>
                     <div id="edit-campo-observaciones" class="hidden md:col-span-2">
@@ -606,7 +626,7 @@
         </div>
     </div>
 
-    <!-- IMPRESIÓN / ORDEN INDIVIDUAL SAE (TABLA ADAPTADA A MÚLTIPLES PARTIDAS) -->
+    <!-- IMPRESIÓN / ORDEN INDIVIDUAL SAE -->
     <div id="seccion-orden-impresion" class="hidden bg-white p-8 max-w-4xl mx-auto border border-gray-300">
         <div class="border-b-2 border-capex pb-4 mb-6 flex justify-between items-center">
             <div class="flex items-center space-x-4">
@@ -647,7 +667,6 @@
                 </tr>
             </thead>
             <tbody id="print-tabla-partidas-body">
-                <!-- Se llenan dinámicamente -->
             </tbody>
         </table>
 
@@ -821,7 +840,6 @@
             }
         }
 
-        // --- FUNCIONES DINÁMICAS DE PARTIDAS DE SALIDA ---
         function agregarPartidaSalida() {
             const categoria = document.getElementById('salida_categoria_producto').value;
             const catalogo = obtenerCatalogo(categoria);
@@ -1049,7 +1067,6 @@
             }
         }
 
-        // FUNCIÓN GUARDAR SALIDA ADAPTADA A MÚLTIPLES PARTIDAS Y CONDICIÓN RECUPERABLE
         async function guardarSalida(e) {
             e.preventDefault();
             const categoria = document.getElementById('salida_categoria_producto').value;
@@ -1165,7 +1182,6 @@
             }
         }
 
-        // EDICIÓN DE REGISTROS
         function abrirModalEditar(id) {
             const item = movimientos.find(m => String(m.id) === String(id));
             if (!item) return;
@@ -1300,7 +1316,6 @@
             }
         }
 
-        // FUNCIÓN DE IMPRESIÓN ADAPTADA A GRUPOS DE PARTIDAS
         function imprimirOrdenGrupo(items) {
             if (!items || items.length === 0) return;
 
@@ -1349,12 +1364,24 @@
                     <div class="col-span-2"><span class="font-bold text-gray-700">Ajuste / Observación:</span> <span class="ml-2 font-semibold">${primerItem.medida_ajustar}</span></div>
                 `;
             } else {
-                document.getElementById('print-titulo-orden').innerText = `ORDEN DE SALIDA (${catNombre.toUpperCase()}S SEGUNDA)`;
-                document.getElementById('print-subtitulo-orden').innerText = "Movimiento de Salida - CAPEX Puertas de Madera";
-                document.getElementById('print-instruccion-sae').innerHTML = `Capturar movimiento de <strong>Salida en SAE</strong> de <u>Almacén 4 (Merma / Segunda)</u> por el concepto: <strong>${primerItem.concepto || primerItem.motivo}</strong>.`;
+                const conceptoActual = primerItem.concepto || primerItem.motivo;
+                let instruccionSaeHTML = `Capturar movimiento de <strong>Salida en SAE</strong> de <u>Almacén 4</u> por el concepto: <strong>${conceptoActual}</strong>.`;
+                let tituloOrdenHTML = `ORDEN DE SALIDA (${catNombre.toUpperCase()}S SEGUNDA)`;
+
+                if (conceptoActual === 'Traspaso Almacen 4 a Almacen 3') {
+                    tituloOrdenHTML = `ORDEN DE TRASPASO ALMACÉN 4 ➔ ALMACÉN 3`;
+                    instruccionSaeHTML = `Capturar <strong>Traspaso o Salida por Traspaso en SAE</strong> del <u>Almacén 4</u> hacia el <u>Almacén 3</u>.`;
+                } else if (conceptoActual === 'Traspaso Almacen 3 a Almacen 4') {
+                    tituloOrdenHTML = `ORDEN DE TRASPASO ALMACÉN 3 ➔ ALMACÉN 4`;
+                    instruccionSaeHTML = `Capturar <strong>Traspaso de Entrada en SAE</strong> del <u>Almacén 3</u> hacia el <u>Almacén 4</u>.`;
+                }
+
+                document.getElementById('print-titulo-orden').innerText = tituloOrdenHTML;
+                document.getElementById('print-subtitulo-orden').innerText = "Movimiento de Almacén - CAPEX Puertas de Madera";
+                document.getElementById('print-instruccion-sae').innerHTML = instruccionSaeHTML;
 
                 gridDetalles.innerHTML = `
-                    <div class="col-span-2"><span class="font-bold text-gray-700">Concepto Oficial de Salida:</span> <span class="font-bold text-red-700 ml-2 uppercase">${primerItem.concepto || primerItem.motivo}</span></div>
+                    <div class="col-span-2"><span class="font-bold text-gray-700">Concepto / Movimiento SAE:</span> <span class="font-bold text-red-700 ml-2 uppercase">${conceptoActual}</span></div>
                     <div class="col-span-2 border-t pt-2 mt-1"><span class="font-bold text-gray-700">Comentarios / Observaciones:</span> <p class="mt-1 text-gray-800 bg-white p-2 border rounded">${primerItem.comentarios || primerItem.observaciones || 'Sin observaciones'}</p></div>
                 `;
             }
@@ -1386,16 +1413,29 @@
             const totalSalidas = salidas.reduce((s, m) => s + Number(m.cantidad || 0), 0);
             const stockActual = totalIngresado - totalSalidas;
 
-            const recupIngresos = ingresos.filter(m => m.es_recuperable === true || m.es_recuperable === 'Sí').reduce((s, m) => s + Number(m.cantidad || 0), 0);
-            const recupSalidas = salidas.filter(m => m.es_recuperable === true || m.es_recuperable === 'Sí').reduce((s, m) => s + Number(m.cantidad || 0), 0);
-            const recuperablesTotal = Math.max(0, recupIngresos - recupSalidas);
-
             document.getElementById(`kpi-${tipo}-ingresado`).innerText = `${totalIngresado.toLocaleString()} Pzas`;
             document.getElementById(`kpi-${tipo}-salidas`).innerText = `${totalSalidas.toLocaleString()} Pzas`;
             document.getElementById(`kpi-${tipo}-stock`).innerText = `${stockActual.toLocaleString()} Pzas`;
-            document.getElementById(`kpi-${tipo}-recuperables`).innerText = `${recuperablesTotal.toLocaleString()} Pzas`;
 
             if (tipo === 'hojas') {
+                let totalRecup = 0;
+                ingresos.forEach(m => {
+                    const esRecup = m.es_recuperable === true || m.es_recuperable === 'Sí';
+                    if (esRecup) {
+                        totalRecup += Number(m.cantidad || 0);
+                    }
+                });
+
+                salidas.forEach(m => {
+                    const esRecup = m.es_recuperable === true || m.es_recuperable === 'Sí';
+                    if (esRecup) {
+                        totalRecup -= Number(m.cantidad || 0);
+                    }
+                });
+                totalRecup = Math.max(0, totalRecup);
+
+                document.getElementById('kpi-hojas-recuperables').innerText = `${totalRecup.toLocaleString()} Pzas`;
+
                 const medidasSet = new Set(dataset.map(m => m.medida).filter(Boolean));
                 const tablaMedidas = document.getElementById('tabla-dashboard-medidas');
                 tablaMedidas.innerHTML = '';
@@ -1465,6 +1505,11 @@
                 renderizarGraficoConceptos(salidas, 'graficoConceptoSalidas', 'hojas');
 
             } else if (tipo === 'puertas') {
+                const recupIngresos = ingresos.filter(m => m.es_recuperable === true || m.es_recuperable === 'Sí').reduce((s, m) => s + Number(m.cantidad || 0), 0);
+                const recupSalidas = salidas.filter(m => m.es_recuperable === true || m.es_recuperable === 'Sí').reduce((s, m) => s + Number(m.cantidad || 0), 0);
+                const recuperablesTotal = Math.max(0, recupIngresos - recupSalidas);
+                document.getElementById(`kpi-puertas-recuperables`).innerText = `${recuperablesTotal.toLocaleString()} Pzas`;
+
                 const modelosSet = new Set(dataset.map(m => m.modelo).filter(Boolean));
                 const tablaModelos = document.getElementById('tabla-dashboard-puertas-modelo');
                 tablaModelos.innerHTML = '';
@@ -1551,7 +1596,15 @@
         }
 
         function renderizarGraficoConceptos(salidas, canvasId, tipo) {
-            const conceptos = { 'Perdida': 0, 'Salida a fabrica': 0, 'Salida empaque': 0, 'Venta de Segunda': 0 };
+            const conceptos = { 
+                'Perdida': 0, 
+                'Salida a fabrica': 0, 
+                'Salida empaque': 0, 
+                'Venta de Segunda': 0,
+                'Traspaso Almacen 4 a Almacen 3': 0,
+                'Traspaso Almacen 3 a Almacen 4': 0
+            };
+
             salidas.forEach(s => {
                 const c = s.concepto || s.motivo;
                 if (conceptos[c] !== undefined) {
@@ -1570,10 +1623,24 @@
             const chartInstance = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
-                    labels: ['Pérdida (Desecho)', 'Salida a fábrica', 'Salida empaque', 'Venta de Segunda'],
+                    labels: [
+                        'Pérdida (Desecho)', 
+                        'Salida a fábrica', 
+                        'Salida empaque', 
+                        'Venta de Segunda', 
+                        'Traspaso Alm. 4 ➔ 3', 
+                        'Traspaso Alm. 3 ➔ 4'
+                    ],
                     datasets: [{
-                        data: [conceptos['Perdida'], conceptos['Salida a fabrica'], conceptos['Salida empaque'], conceptos['Venta de Segunda']],
-                        backgroundColor: ['#DC2626', '#D97706', '#3B4B44', '#059669'],
+                        data: [
+                            conceptos['Perdida'], 
+                            conceptos['Salida a fabrica'], 
+                            conceptos['Salida empaque'], 
+                            conceptos['Venta de Segunda'],
+                            conceptos['Traspaso Almacen 4 a Almacen 3'],
+                            conceptos['Traspaso Almacen 3 a Almacen 4']
+                        ],
+                        backgroundColor: ['#DC2626', '#D97706', '#3B4B44', '#059669', '#2563EB', '#9333EA'],
                         borderWidth: 1
                     }]
                 },
@@ -1592,6 +1659,7 @@
             
             const fCategoria = document.getElementById('filtro-categoria').value;
             const fTipo = document.getElementById('filtro-tipo').value;
+            const fRecuperable = document.getElementById('filtro-recuperable').value;
             const fConcepto = document.getElementById('filtro-concepto').value;
             const fFechaDesde = document.getElementById('filtro-fecha-desde').value;
             const fFechaHasta = document.getElementById('filtro-fecha-hasta').value;
@@ -1600,9 +1668,12 @@
             ultimosFiltrados = movimientos.filter(m => {
                 const catItem = m.categoria || 'Hoja'; 
                 const concItem = m.concepto || m.motivo || '';
+                const recupBool = m.es_recuperable === true || m.es_recuperable === 'Sí';
+                const recupText = recupBool ? 'Sí' : 'No';
 
                 const matchCategoria = !fCategoria || catItem === fCategoria;
                 const matchTipo = !fTipo || m.tipo === fTipo;
+                const matchRecuperable = !fRecuperable || recupText === fRecuperable;
                 const matchConcepto = !fConcepto || concItem === fConcepto;
                 const matchClave = !fClave || (m.clave && m.clave.toUpperCase().includes(fClave));
 
@@ -1610,10 +1681,20 @@
                 if (fFechaDesde && m.fecha < fFechaDesde) matchFecha = false;
                 if (fFechaHasta && m.fecha > fFechaHasta) matchFecha = false;
 
-                return matchCategoria && matchTipo && matchConcepto && matchClave && matchFecha;
+                return matchCategoria && matchTipo && matchRecuperable && matchConcepto && matchClave && matchFecha;
             });
 
             document.getElementById('contador-resultados').innerText = `Mostrando ${ultimosFiltrados.length} de ${movimientos.length} registros`;
+
+            // Calcular el balance neto (Ingresos suman, Salidas restan) de los registros filtrados
+            const balanceNetoFiltrado = ultimosFiltrados.reduce((sum, m) => {
+                const cant = Number(m.cantidad || 0);
+                return m.tipo === 'SALIDA' ? sum - cant : sum + cant;
+            }, 0);
+
+            const elemTotal = document.getElementById('total-piezas-filtradas');
+            elemTotal.innerText = `${balanceNetoFiltrado.toLocaleString()} Pzas`;
+            elemTotal.className = `px-3 py-3 text-center text-base font-bold ${balanceNetoFiltrado >= 0 ? 'text-capex-dark' : 'text-red-600'}`;
 
             tbody.innerHTML = '';
 
@@ -1628,7 +1709,7 @@
                 
                 const esIngreso = m.tipo === 'INGRESO';
                 const catNombre = m.categoria || 'Hoja';
-                const recupTexto = typeof m.es_recuperable === 'boolean' ? (m.es_recuperable ? 'Sí' : 'No') : (m.es_recuperable || 'No');
+                const recupTexto = (m.es_recuperable === true || m.es_recuperable === 'Sí') ? 'Sí' : 'No';
 
                 tr.innerHTML = `
                     <td class="px-3 py-3">
@@ -1669,6 +1750,7 @@
         function limpiarFiltrosHistorial() {
             document.getElementById('filtro-categoria').value = '';
             document.getElementById('filtro-tipo').value = '';
+            document.getElementById('filtro-recuperable').value = '';
             document.getElementById('filtro-concepto').value = '';
             document.getElementById('filtro-fecha-desde').value = '';
             document.getElementById('filtro-fecha-hasta').value = '';
@@ -1704,6 +1786,7 @@
             let notasFiltro = [];
             const fCat = document.getElementById('filtro-categoria').value;
             const fTipo = document.getElementById('filtro-tipo').value;
+            const fRecup = document.getElementById('filtro-recuperable').value;
             const fConc = document.getElementById('filtro-concepto').value;
             const fDesde = document.getElementById('filtro-fecha-desde').value;
             const fHasta = document.getElementById('filtro-fecha-hasta').value;
@@ -1711,6 +1794,7 @@
 
             if (fCat) notasFiltro.push(`Cat: ${fCat}`);
             if (fTipo) notasFiltro.push(`Tipo: ${fTipo}`);
+            if (fRecup) notasFiltro.push(`Recuperable: ${fRecup}`);
             if (fConc) notasFiltro.push(`Concepto: ${fConc}`);
             if (fDesde || fHasta) {
                 const dCorta = fDesde ? formatearFechaCorta(fDesde) : 'Inicio';
@@ -1727,7 +1811,7 @@
                 ultimosFiltrados.forEach(m => {
                     const esIngreso = m.tipo === 'INGRESO';
                     const catNombre = m.categoria || 'Hoja';
-                    const recupTexto = typeof m.es_recuperable === 'boolean' ? (m.es_recuperable ? 'Sí' : 'No') : (m.es_recuperable || 'No');
+                    const recupTexto = (m.es_recuperable === true || m.es_recuperable === 'Sí') ? 'Sí' : 'No';
 
                     const tr = document.createElement('tr');
                     tr.className = "border-b";
