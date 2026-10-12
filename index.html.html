@@ -157,6 +157,27 @@
                 </div>
             </div>
 
+            <!-- TABLA MODIFICADA: DESGLOSE DE HOJAS POR CLAVE (RECUPERABLES VS SCRAP) -->
+            <div class="bg-white p-5 rounded-lg shadow border-t-2 border-capex">
+                <h2 class="text-lg font-bold text-capex-dark mb-4 flex justify-between items-center">
+                    <span><i class="fa-solid fa-boxes-stacked text-capex mr-2"></i>Desglosado de Hojas por Clave (Recuperables vs Scrap)</span>
+                </h2>
+                <div class="overflow-y-auto max-h-72">
+                    <table class="w-full text-sm text-left text-gray-500">
+                        <thead class="text-xs text-gray-700 uppercase bg-gray-100 sticky top-0">
+                            <tr>
+                                <th class="px-3 py-2">Clave</th>
+                                <th class="px-3 py-2">Descripción</th>
+                                <th class="px-3 py-2 text-center">Recuperables (Sí)</th>
+                                <th class="px-3 py-2 text-center">No Recuperables (Scrap)</th>
+                                <th class="px-3 py-2 text-right">Stock Total Clave</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-dashboard-modelos-hojas"></tbody>
+                    </table>
+                </div>
+            </div>
+
             <div class="bg-white p-5 rounded-lg shadow">
                 <h2 class="text-lg font-bold text-capex-dark mb-4"><i class="fa-solid fa-chart-pie text-capex mr-2"></i>Salidas de Hojas por Concepto / Traspaso</h2>
                 <div class="h-64 flex justify-center">
@@ -951,7 +972,6 @@
         }
 
         function generarFoliosConsecutivos() {
-            // Extraer números de los folios de ingreso existentes (ej: "ING-00005" -> 5)
             const numerosIngreso = movimientos
                 .filter(m => m.tipo === 'INGRESO' && m.folio_sae)
                 .map(m => {
@@ -959,7 +979,6 @@
                     return partes.length > 1 ? parseInt(partes[1], 10) : 0;
                 });
 
-            // Extraer números de los folios de salida existentes (ej: "SAL-00003" -> 3)
             const numerosSalida = movimientos
                 .filter(m => m.tipo === 'SALIDA' && m.folio_sae)
                 .map(m => {
@@ -1012,12 +1031,12 @@
             } else if (pestana === 'nuevo-registro') {
                 document.getElementById('vista-nuevo-registro').classList.remove('hidden');
                 document.getElementById('btn-nuevo-registro').className = "px-3 py-2 rounded-md text-sm font-medium bg-capex text-white";
-                await cargarMovimientos(); // Espera a refrescar datos antes de calcular el folio
+                await cargarMovimientos();
                 generarFoliosConsecutivos();
             } else if (pestana === 'nueva-salida') {
                 document.getElementById('vista-nueva-salida').classList.remove('hidden');
                 document.getElementById('btn-nueva-salida').className = "px-3 py-2 rounded-md text-sm font-medium bg-capex text-white";
-                await cargarMovimientos(); // Espera a refrescar datos antes de calcular el folio
+                await cargarMovimientos();
                 generarFoliosConsecutivos();
             } else if (pestana === 'historial') {
                 document.getElementById('vista-historial').classList.remove('hidden');
@@ -1520,6 +1539,56 @@
                 }
 
                 renderizarTablaClaves(dataset, 'tabla-dashboard-stock', ingresos, salidas);
+
+                // NUEVA LÓGICA DE RENDERIZADO: DESGLOSE DE HOJAS POR CLAVE (RECUPERABLES VS SCRAP)
+                const clavesHojasSet = new Set(dataset.map(m => m.clave).filter(Boolean));
+                const tablaModelosHojas = document.getElementById('tabla-dashboard-modelos-hojas');
+                if (tablaModelosHojas) {
+                    tablaModelosHojas.innerHTML = '';
+
+                    if (clavesHojasSet.size === 0) {
+                        tablaModelosHojas.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-gray-400">Sin claves de hojas registradas</td></tr>`;
+                    } else {
+                        clavesHojasSet.forEach(clave => {
+                            const movsClave = dataset.filter(m => m.clave === clave);
+                            const itemCat = CATALOGO_HOJAS[clave] || {};
+                            const descripcionClave = itemCat.descripcion || movsClave[0]?.descripcion || 'N/A';
+                            
+                            let recupTotal = 0;
+                            let noRecupTotal = 0;
+
+                            movsClave.forEach(m => {
+                                const cant = Number(m.cantidad || 0);
+                                const esRecup = m.es_recuperable === true || m.es_recuperable === 'Sí';
+                                
+                                if (m.tipo === 'INGRESO') {
+                                    if (esRecup) recupTotal += cant;
+                                    else noRecupTotal += cant;
+                                } else if (m.tipo === 'SALIDA') {
+                                    if (esRecup) recupTotal -= cant;
+                                    else noRecupTotal -= cant;
+                                }
+                            });
+
+                            recupTotal = Math.max(0, recupTotal);
+                            noRecupTotal = Math.max(0, noRecupTotal);
+                            const stockTotalClave = recupTotal + noRecupTotal;
+
+                            const tr = document.createElement('tr');
+                            tr.className = "border-b hover:bg-gray-50 cursor-pointer";
+                            tr.onclick = () => verMovimientosClave(clave);
+                            tr.innerHTML = `
+                                <td class="px-3 py-2 font-mono font-bold text-capex">${clave}</td>
+                                <td class="px-3 py-2 text-gray-700">${descripcionClave}</td>
+                                <td class="px-3 py-2 text-center text-amber-600 font-bold">${recupTotal} pzas</td>
+                                <td class="px-3 py-2 text-center text-red-600 font-bold">${noRecupTotal} pzas</td>
+                                <td class="px-3 py-2 text-right font-bold text-gray-900">${stockTotalClave} pzas</td>
+                            `;
+                            tablaModelosHojas.appendChild(tr);
+                        });
+                    }
+                }
+
                 renderizarGraficoConceptos(salidas, 'graficoConceptoSalidas', 'hojas');
 
             } else if (tipo === 'puertas') {
@@ -1704,7 +1773,6 @@
 
             document.getElementById('contador-resultados').innerText = `Mostrando ${ultimosFiltrados.length} de ${movimientos.length} registros`;
 
-            // Calcular el balance neto (Ingresos suman, Salidas restan) de los registros filtrados
             const balanceNetoFiltrado = ultimosFiltrados.reduce((sum, m) => {
                 const cant = Number(m.cantidad || 0);
                 return m.tipo === 'SALIDA' ? sum - cant : sum + cant;
