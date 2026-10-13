@@ -179,7 +179,10 @@
             </div>
 
             <div class="bg-white p-5 rounded-lg shadow">
-                <h2 class="text-lg font-bold text-capex-dark mb-4"><i class="fa-solid fa-chart-pie text-capex mr-2"></i>Salidas de Hojas por Concepto / Traspaso</h2>
+                <h2 class="text-lg font-bold text-capex-dark mb-4 flex justify-between items-center">
+                    <span><i class="fa-solid fa-chart-pie text-capex mr-2"></i>Salidas de Hojas por Concepto / Traspaso</span>
+                    <span class="text-xs bg-capex-soft text-capex px-2 py-1 rounded">Haz clic en la gráfica para filtrar el historial</span>
+                </h2>
                 <div class="h-64 flex justify-center">
                     <canvas id="graficoConceptoSalidas"></canvas>
                 </div>
@@ -280,7 +283,10 @@
             </div>
 
             <div class="bg-white p-5 rounded-lg shadow">
-                <h2 class="text-lg font-bold text-capex-dark mb-4"><i class="fa-solid fa-chart-pie text-amber-600 mr-2"></i>Distribución de Salidas y Traspasos de Puertas</h2>
+                <h2 class="text-lg font-bold text-capex-dark mb-4 flex justify-between items-center">
+                    <span><i class="fa-solid fa-chart-pie text-amber-600 mr-2"></i>Distribución de Salidas y Traspasos de Puertas</span>
+                    <span class="text-xs bg-amber-50 text-amber-800 px-2 py-1 rounded">Haz clic en la gráfica para filtrar el historial</span>
+                </h2>
                 <div class="h-64 flex justify-center">
                     <canvas id="graficoPuertasSalidas"></canvas>
                 </div>
@@ -1540,7 +1546,6 @@
 
                 renderizarTablaClaves(dataset, 'tabla-dashboard-stock', ingresos, salidas);
 
-                // NUEVA LÓGICA DE RENDERIZADO: DESGLOSE DE HOJAS POR CLAVE (RECUPERABLES VS SCRAP)
                 const clavesHojasSet = new Set(dataset.map(m => m.clave).filter(Boolean));
                 const tablaModelosHojas = document.getElementById('tabla-dashboard-modelos-hojas');
                 if (tablaModelosHojas) {
@@ -1682,7 +1687,30 @@
             }
         }
 
+        function filtrarHistorialPorConcepto(concepto, categoria) {
+            cambiarPestana('historial');
+            limpiarFiltrosHistorial();
+            
+            if (categoria === 'hojas') {
+                document.getElementById('filtro-categoria').value = 'Hoja';
+            } else if (categoria === 'puertas') {
+                document.getElementById('filtro-categoria').value = 'Puerta';
+            }
+            
+            document.getElementById('filtro-concepto').value = concepto;
+            renderizarHistorial();
+        }
+
         function renderizarGraficoConceptos(salidas, canvasId, tipo) {
+            const conceptosKeys = [
+                'Perdida', 
+                'Salida a fabrica', 
+                'Salida empaque', 
+                'Venta de Segunda',
+                'Traspaso Almacen 4 a Almacen 3',
+                'Traspaso Almacen 3 a Almacen 4'
+            ];
+
             const conceptos = { 
                 'Perdida': 0, 
                 'Salida a fabrica': 0, 
@@ -1733,7 +1761,19 @@
                 },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: false
+                    maintainAspectRatio: false,
+                    onClick: (evt, elements) => {
+                        if (elements && elements.length > 0) {
+                            const clickedIndex = elements[0].index;
+                            const conceptoSeleccionado = conceptosKeys[clickedIndex];
+                            if (conceptoSeleccionado) {
+                                filtrarHistorialPorConcepto(conceptoSeleccionado, tipo);
+                            }
+                        }
+                    },
+                    onHover: (event, chartElement) => {
+                        event.native.target.style.cursor = chartElement[0] ? 'pointer' : 'default';
+                    }
                 }
             });
 
