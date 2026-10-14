@@ -404,6 +404,16 @@
                             <input type="text" id="salida_folio" readonly class="w-full border rounded-md p-2 bg-gray-100 font-bold font-mono text-red-600">
                         </div>
 
+                        <!-- NUEVO: TIPO DE SALIDA (Manual o PROD) -->
+                        <div>
+                            <label class="block text-sm font-bold text-red-900 mb-1">Tipo de Salida</label>
+                            <select id="salida_tipo_salida" required class="w-full border border-red-300 rounded-md p-2 bg-white font-bold text-red-800 focus:ring-2 focus:ring-red-500">
+                                <option value="" disabled selected>Seleccione tipo...</option>
+                                <option value="Salida Manual">Salida Manual</option>
+                                <option value="PROD">PROD</option>
+                            </select>
+                        </div>
+
                         <div class="md:col-span-2 bg-red-50 p-4 border border-red-200 rounded-md">
                             <label class="block text-sm font-bold text-red-900 mb-1">Concepto de Salida / Traspaso</label>
                             <select id="salida_concepto" required class="w-full border border-red-300 rounded-md p-2 bg-white font-semibold text-red-800 focus:ring-2 focus:ring-red-500">
@@ -628,6 +638,13 @@
                         <input type="text" id="edit-medida-ajustar" class="w-full border rounded-md p-2 text-xs focus:ring-2 focus:ring-blue-500">
                     </div>
 
+                    <div id="edit-campo-tipo-salida" class="hidden">
+                        <label class="block text-xs font-semibold text-gray-700 mb-1">Tipo de Salida</label>
+                        <select id="edit-tipo-salida" class="w-full border rounded-md p-2 text-xs focus:ring-2 focus:ring-blue-500 font-bold text-red-700">
+                            <option value="Salida Manual">Salida Manual</option>
+                            <option value="PROD">PROD</option>
+                        </select>
+                    </div>
                     <div id="edit-campo-concepto" class="hidden md:col-span-2">
                         <label class="block text-xs font-semibold text-gray-700 mb-1">Concepto de Salida / Traspaso</label>
                         <select id="edit-concepto" class="w-full border rounded-md p-2 text-xs focus:ring-2 focus:ring-blue-500">
@@ -1115,6 +1132,7 @@
             const categoria = document.getElementById('salida_categoria_producto').value;
             const fecha = document.getElementById('salida_fecha').value;
             const folio = document.getElementById('salida_folio').value;
+            const tipoSalida = document.getElementById('salida_tipo_salida').value;
             const concepto = document.getElementById('salida_concepto').value;
             const autorizado = document.getElementById('salida_autorizado').value;
             const comentarios = document.getElementById('salida_comentarios').value.trim() || 'Sin comentarios registrados.';
@@ -1144,6 +1162,7 @@
                         tipo: 'SALIDA',
                         fecha: fecha,
                         folio_sae: folio,
+                        tipo_salida: tipoSalida,
                         motivo: concepto,
                         clave: clave,
                         medida: medida,
@@ -1159,6 +1178,7 @@
                         tipo: 'SALIDA',
                         fecha: fecha,
                         folio_sae: folio,
+                        tipo_salida: tipoSalida,
                         concepto: concepto,
                         clave: clave,
                         modelo: itemCat.modelo || 'N/A',
@@ -1186,6 +1206,7 @@
                         movimientos.unshift({
                             ...dbItem,
                             modelo: original.modelo,
+                            tipo_salida: original.tipo_salida,
                             concepto: original.concepto,
                             comentarios: original.comentarios
                         });
@@ -1245,6 +1266,7 @@
             const esIngreso = item.tipo === 'INGRESO';
             document.getElementById('edit-campo-recuperable').classList.toggle('hidden', false);
             document.getElementById('edit-campo-medida-ajustar').classList.toggle('hidden', !esIngreso);
+            document.getElementById('edit-campo-tipo-salida').classList.toggle('hidden', esIngreso);
             document.getElementById('edit-campo-concepto').classList.toggle('hidden', esIngreso);
             document.getElementById('edit-campo-observaciones').classList.toggle('hidden', esIngreso);
 
@@ -1255,6 +1277,7 @@
                 document.getElementById('edit-medida-ajustar').value = item.medida_ajustar || '';
                 evaluarModalEditarRecuperable();
             } else {
+                document.getElementById('edit-tipo-salida').value = item.tipo_salida || 'Salida Manual';
                 document.getElementById('edit-concepto').value = item.concepto || item.motivo || 'Perdida';
                 document.getElementById('edit-observaciones').value = item.comentarios || item.observaciones || '';
             }
@@ -1326,6 +1349,7 @@
             if (tipo === 'INGRESO') {
                 payload.medida_ajustar = esRecup === 'Sí' ? document.getElementById('edit-medida-ajustar').value.trim() : 'N/A';
             } else {
+                payload.tipo_salida = document.getElementById('edit-tipo-salida').value;
                 payload.motivo = document.getElementById('edit-concepto').value;
                 payload.observaciones = document.getElementById('edit-observaciones').value.trim();
             }
@@ -1344,6 +1368,7 @@
                         ...movimientos[index],
                         ...payload,
                         modelo: itemCat.modelo || movimientos[index].modelo,
+                        tipo_salida: payload.tipo_salida || movimientos[index].tipo_salida,
                         concepto: payload.motivo || movimientos[index].concepto,
                         comentarios: payload.observaciones || movimientos[index].comentarios
                     };
@@ -1407,16 +1432,17 @@
                     <div class="col-span-2"><span class="font-bold text-gray-700">Ajuste / Observación:</span> <span class="ml-2 font-semibold">${primerItem.medida_ajustar}</span></div>
                 `;
             } else {
+                const tipoSalidaVal = primerItem.tipo_salida || 'Salida Manual';
                 const conceptoActual = primerItem.concepto || primerItem.motivo;
-                let instruccionSaeHTML = `Capturar movimiento de <strong>Salida en SAE</strong> de <u>Almacén 4</u> por el concepto: <strong>${conceptoActual}</strong>.`;
-                let tituloOrdenHTML = `ORDEN DE SALIDA (${catNombre.toUpperCase()}S SEGUNDA)`;
+                let instruccionSaeHTML = `Capturar movimiento de <strong>Salida en SAE (${tipoSalidaVal})</strong> de <u>Almacén 4</u> por el concepto: <strong>${conceptoActual}</strong>.`;
+                let tituloOrdenHTML = `ORDEN DE SALIDA ${tipoSalidaVal.toUpperCase()} (${catNombre.toUpperCase()}S SEGUNDA)`;
 
                 if (conceptoActual === 'Traspaso Almacen 4 a Almacen 3') {
                     tituloOrdenHTML = `ORDEN DE TRASPASO ALMACÉN 4 ➔ ALMACÉN 3`;
-                    instruccionSaeHTML = `Capturar <strong>Traspaso o Salida por Traspaso in SAE</strong> del <u>Almacén 4</u> hacia el <u>Almacén 3</u>.`;
+                    instruccionSaeHTML = `Capturar <strong>Traspaso o Salida por Traspaso en SAE (${tipoSalidaVal})</strong> del <u>Almacén 4</u> hacia el <u>Almacén 3</u>.`;
                 } else if (conceptoActual === 'Traspaso Almacen 3 a Almacen 4') {
                     tituloOrdenHTML = `ORDEN DE TRASPASO ALMACÉN 3 ➔ ALMACÉN 4`;
-                    instruccionSaeHTML = `Capturar <strong>Traspaso de Entrada en SAE</strong> del <u>Almacén 3</u> hacia el <u>Almacén 4</u>.`;
+                    instruccionSaeHTML = `Capturar <strong>Traspaso de Entrada en SAE (${tipoSalidaVal})</strong> del <u>Almacén 3</u> hacia el <u>Almacén 4</u>.`;
                 }
 
                 document.getElementById('print-titulo-orden').innerText = tituloOrdenHTML;
@@ -1424,7 +1450,8 @@
                 document.getElementById('print-instruccion-sae').innerHTML = instruccionSaeHTML;
 
                 gridDetalles.innerHTML = `
-                    <div class="col-span-2"><span class="font-bold text-gray-700">Concepto / Movimiento SAE:</span> <span class="font-bold text-red-700 ml-2 uppercase">${conceptoActual}</span></div>
+                    <div><span class="font-bold text-gray-700">Tipo de Salida:</span> <span class="font-bold text-red-700 ml-2 uppercase">${tipoSalidaVal}</span></div>
+                    <div><span class="font-bold text-gray-700">Concepto / Movimiento SAE:</span> <span class="font-bold text-red-700 ml-2 uppercase">${conceptoActual}</span></div>
                     <div class="col-span-2 border-t pt-2 mt-1"><span class="font-bold text-gray-700">Comentarios / Observaciones:</span> <p class="mt-1 text-gray-800 bg-white p-2 border rounded">${primerItem.comentarios || primerItem.observaciones || 'Sin observaciones'}</p></div>
                 `;
             }
@@ -1550,327 +1577,279 @@
                 const tablaModelosHojas = document.getElementById('tabla-dashboard-modelos-hojas');
                 if (tablaModelosHojas) {
                     tablaModelosHojas.innerHTML = '';
-
                     if (clavesHojasSet.size === 0) {
-                        tablaModelosHojas.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-gray-400">Sin claves de hojas registradas</td></tr>`;
+                        tablaModelosHojas.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-gray-400">Sin registros de hojas</td></tr>`;
                     } else {
-                        clavesHojasSet.forEach(clave => {
-                            const movsClave = dataset.filter(m => m.clave === clave);
-                            const itemCat = CATALOGO_HOJAS[clave] || {};
-                            const descripcionClave = itemCat.descripcion || movsClave[0]?.descripcion || 'N/A';
+                        clavesHojasSet.forEach(c => {
+                            const itemCat = CATALOGO_HOJAS[c] || {};
+                            const movsClave = dataset.filter(m => m.clave === c);
                             
-                            let recupTotal = 0;
-                            let noRecupTotal = 0;
+                            let recupCount = 0;
+                            let scrapCount = 0;
 
                             movsClave.forEach(m => {
-                                const cant = Number(m.cantidad || 0);
+                                const esIng = m.tipo === 'INGRESO';
                                 const esRecup = m.es_recuperable === true || m.es_recuperable === 'Sí';
-                                
-                                if (m.tipo === 'INGRESO') {
-                                    if (esRecup) recupTotal += cant;
-                                    else noRecupTotal += cant;
-                                } else if (m.tipo === 'SALIDA') {
-                                    if (esRecup) recupTotal -= cant;
-                                    else noRecupTotal -= cant;
+                                const cant = Number(m.cantidad || 0);
+
+                                if (esIng) {
+                                    if (esRecup) recupCount += cant;
+                                    else scrapCount += cant;
+                                } else {
+                                    if (esRecup) recupCount -= cant;
+                                    else scrapCount -= cant;
                                 }
                             });
 
-                            recupTotal = Math.max(0, recupTotal);
-                            noRecupTotal = Math.max(0, noRecupTotal);
-                            const stockTotalClave = recupTotal + noRecupTotal;
+                            recupCount = Math.max(0, recupCount);
+                            scrapCount = Math.max(0, scrapCount);
+                            const totalStockClave = recupCount + scrapCount;
 
                             const tr = document.createElement('tr');
-                            tr.className = "border-b hover:bg-gray-50 cursor-pointer";
-                            tr.onclick = () => verMovimientosClave(clave);
+                            tr.className = "border-b hover:bg-gray-50";
                             tr.innerHTML = `
-                                <td class="px-3 py-2 font-mono font-bold text-capex">${clave}</td>
-                                <td class="px-3 py-2 text-gray-700">${descripcionClave}</td>
-                                <td class="px-3 py-2 text-center text-amber-600 font-bold">${recupTotal} pzas</td>
-                                <td class="px-3 py-2 text-center text-red-600 font-bold">${noRecupTotal} pzas</td>
-                                <td class="px-3 py-2 text-right font-bold text-gray-900">${stockTotalClave} pzas</td>
+                                <td class="px-3 py-2 font-mono font-bold text-capex">${c}</td>
+                                <td class="px-3 py-2 text-gray-700">${itemCat.descripcion || 'Personalizada'}</td>
+                                <td class="px-3 py-2 text-center font-bold text-emerald-700">${recupCount} pzas</td>
+                                <td class="px-3 py-2 text-center font-bold text-red-600">${scrapCount} pzas</td>
+                                <td class="px-3 py-2 text-right font-bold text-gray-900">${totalStockClave} pzas</td>
                             `;
                             tablaModelosHojas.appendChild(tr);
                         });
                     }
                 }
 
-                renderizarGraficoConceptos(salidas, 'graficoConceptoSalidas', 'hojas');
+                renderizarGraficoSalidas(salidas, 'graficoConceptoSalidas', 'hojas');
 
             } else if (tipo === 'puertas') {
-                const recupIngresos = ingresos.filter(m => m.es_recuperable === true || m.es_recuperable === 'Sí').reduce((s, m) => s + Number(m.cantidad || 0), 0);
-                const recupSalidas = salidas.filter(m => m.es_recuperable === true || m.es_recuperable === 'Sí').reduce((s, m) => s + Number(m.cantidad || 0), 0);
-                const recuperablesTotal = Math.max(0, recupIngresos - recupSalidas);
-                document.getElementById(`kpi-puertas-recuperables`).innerText = `${recuperablesTotal.toLocaleString()} Pzas`;
+                let totalRecupPuertas = 0;
+                ingresos.forEach(m => {
+                    const esRecup = m.es_recuperable === true || m.es_recuperable === 'Sí';
+                    if (esRecup) totalRecupPuertas += Number(m.cantidad || 0);
+                });
+                salidas.forEach(m => {
+                    const esRecup = m.es_recuperable === true || m.es_recuperable === 'Sí';
+                    if (esRecup) totalRecupPuertas -= Number(m.cantidad || 0);
+                });
+                totalRecupPuertas = Math.max(0, totalRecupPuertas);
+                document.getElementById('kpi-puertas-recuperables').innerText = `${totalRecupPuertas.toLocaleString()} Pzas`;
 
-                const modelosSet = new Set(dataset.map(m => m.modelo).filter(Boolean));
-                const tablaModelos = document.getElementById('tabla-dashboard-puertas-modelo');
-                tablaModelos.innerHTML = '';
-
-                if (modelosSet.size === 0) {
-                    tablaModelos.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-gray-400">Sin modelos registrados</td></tr>`;
-                } else {
-                    modelosSet.forEach(modelo => {
-                        const ing = ingresos.filter(m => m.modelo === modelo).reduce((s, m) => s + Number(m.cantidad || 0), 0);
-                        const sal = salidas.filter(m => m.modelo === modelo).reduce((s, m) => s + Number(m.cantidad || 0), 0);
-                        const stockModelo = ing - sal;
-
-                        const tr = document.createElement('tr');
-                        tr.className = "border-b hover:bg-gray-50";
-                        tr.innerHTML = `
-                            <td class="px-3 py-2 font-bold text-capex-dark">${modelo}</td>
-                            <td class="px-3 py-2 text-center text-emerald-600 font-medium">+${ing}</td>
-                            <td class="px-3 py-2 text-center text-red-600 font-medium">-${sal}</td>
-                            <td class="px-3 py-2 text-right font-bold ${stockModelo > 0 ? 'text-gray-900' : 'text-red-500'}">${stockModelo} pzas</td>
-                        `;
-                        tablaModelos.appendChild(tr);
-                    });
-                }
-
-                const medidasPuertasSet = new Set(dataset.map(m => m.medida).filter(Boolean));
-                const tablaMedidasPuertas = document.getElementById('tabla-dashboard-puertas-medida');
-                tablaMedidasPuertas.innerHTML = '';
-
-                if (medidasPuertasSet.size === 0) {
-                    tablaMedidasPuertas.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-gray-400">Sin medidas registradas</td></tr>`;
-                } else {
-                    medidasPuertasSet.forEach(medida => {
-                        const ing = ingresos.filter(m => m.medida === medida).reduce((s, m) => s + Number(m.cantidad || 0), 0);
-                        const sal = salidas.filter(m => m.medida === medida).reduce((s, m) => s + Number(m.cantidad || 0), 0);
-                        const stockMedida = ing - sal;
-
-                        const tr = document.createElement('tr');
-                        tr.className = "border-b hover:bg-gray-50";
-                        tr.innerHTML = `
-                            <td class="px-3 py-2 font-bold text-capex-dark">${medida}</td>
-                            <td class="px-3 py-2 text-center text-emerald-600 font-medium">+${ing}</td>
-                            <td class="px-3 py-2 text-center text-red-600 font-medium">-${sal}</td>
-                            <td class="px-3 py-2 text-right font-bold ${stockMedida > 0 ? 'text-gray-900' : 'text-red-500'}">${stockMedida} pzas</td>
-                        `;
-                        tablaMedidasPuertas.appendChild(tr);
-                    });
-                }
-
+                renderizarTablaAgrupada(dataset, 'modelo', 'tabla-dashboard-puertas-modelo', ingresos, salidas);
+                renderizarTablaAgrupada(dataset, 'medida', 'tabla-dashboard-puertas-medida', ingresos, salidas);
                 renderizarTablaClaves(dataset, 'tabla-dashboard-puertas-clave', ingresos, salidas);
-                renderizarGraficoConceptos(salidas, 'graficoPuertasSalidas', 'puertas');
+                renderizarGraficoSalidas(salidas, 'graficoPuertasSalidas', 'puertas');
             }
         }
 
-        function renderizarTablaClaves(dataset, tablaId, ingresos, salidas) {
-            const clavesSet = new Set(dataset.map(m => m.clave));
-            const tabla = document.getElementById(tablaId);
+        function renderizarTablaClaves(dataset, elementId, ingresos, salidas) {
+            const tabla = document.getElementById(elementId);
+            if (!tabla) return;
             tabla.innerHTML = '';
 
-            if (clavesSet.size === 0) {
-                tabla.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-gray-400">Sin movimientos registrados</td></tr>`;
-            } else {
-                clavesSet.forEach(clave => {
-                    const ing = ingresos.filter(m => m.clave === clave).reduce((s, m) => s + Number(m.cantidad || 0), 0);
-                    const sal = salidas.filter(m => m.clave === clave).reduce((s, m) => s + Number(m.cantidad || 0), 0);
-                    const disponible = ing - sal;
+            const clavesSet = [...new Set(dataset.map(m => m.clave).filter(Boolean))];
+            if (clavesSet.length === 0) {
+                tabla.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-gray-400">Sin datos registrados</td></tr>`;
+                return;
+            }
 
-                    const tr = document.createElement('tr');
-                    tr.className = "border-b hover:bg-capex-soft cursor-pointer transition";
-                    tr.title = "Haz clic para ver todos los movimientos de esta clave";
-                    tr.onclick = () => verMovimientosClave(clave);
+            clavesSet.forEach(clave => {
+                const ing = ingresos.filter(m => m.clave === clave).reduce((s, m) => s + Number(m.cantidad || 0), 0);
+                const sal = salidas.filter(m => m.clave === clave).reduce((s, m) => s + Number(m.cantidad || 0), 0);
+                const stock = ing - sal;
 
-                    tr.innerHTML = `
-                        <td class="px-3 py-2 font-mono font-bold text-capex-dark flex items-center justify-between">
-                            <span>${clave}</span>
-                            <i class="fa-solid fa-arrow-right text-xs text-capex/50"></i>
-                        </td>
-                        <td class="px-3 py-2 text-center text-emerald-600 font-medium">+${ing}</td>
-                        <td class="px-3 py-2 text-center text-red-600 font-medium">-${sal}</td>
-                        <td class="px-3 py-2 text-right font-bold ${disponible > 0 ? 'text-gray-900' : 'text-red-500'}">${disponible} pzas</td>
-                    `;
-                    tabla.appendChild(tr);
-                });
+                const tr = document.createElement('tr');
+                tr.className = "border-b hover:bg-gray-50 cursor-pointer";
+                tr.onclick = () => verMovimientosClave(clave);
+                tr.innerHTML = `
+                    <td class="px-3 py-2 font-mono font-bold text-capex">${clave}</td>
+                    <td class="px-3 py-2 text-center text-emerald-600 font-medium">+${ing}</td>
+                    <td class="px-3 py-2 text-center text-red-600 font-medium">-${sal}</td>
+                    <td class="px-3 py-2 text-right font-bold ${stock > 0 ? 'text-gray-800' : 'text-red-500'}">${stock} pzas</td>
+                `;
+                tabla.appendChild(tr);
+            });
+        }
+
+        function renderizarTablaAgrupada(dataset, campo, elementId, ingresos, salidas) {
+            const tabla = document.getElementById(elementId);
+            if (!tabla) return;
+            tabla.innerHTML = '';
+
+            const valoresSet = [...new Set(dataset.map(m => m[campo]).filter(Boolean))];
+            if (valoresSet.length === 0) {
+                tabla.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-gray-400">Sin datos</td></tr>`;
+                return;
+            }
+
+            valoresSet.forEach(val => {
+                const ing = ingresos.filter(m => m[campo] === val).reduce((s, m) => s + Number(m.cantidad || 0), 0);
+                const sal = salidas.filter(m => m[campo] === val).reduce((s, m) => s + Number(m.cantidad || 0), 0);
+                const stock = ing - sal;
+
+                const tr = document.createElement('tr');
+                tr.className = "border-b hover:bg-gray-50";
+                tr.innerHTML = `
+                    <td class="px-3 py-2 font-bold text-gray-700">${val}</td>
+                    <td class="px-3 py-2 text-center text-emerald-600">+${ing}</td>
+                    <td class="px-3 py-2 text-center text-red-600">-${sal}</td>
+                    <td class="px-3 py-2 text-right font-bold ${stock > 0 ? 'text-gray-900' : 'text-red-500'}">${stock}</td>
+                `;
+                tabla.appendChild(tr);
+            });
+        }
+
+        function toggleDetalleMedida(medida) {
+            const id = `detalle-medida-${medida.replace(/\s+/g, '-')}`;
+            const elem = document.getElementById(id);
+            if (elem) {
+                elem.classList.toggle('hidden');
             }
         }
 
-        function filtrarHistorialPorConcepto(concepto, categoria) {
+        function verMovimientosClave(clave) {
             cambiarPestana('historial');
-            limpiarFiltrosHistorial();
-            
-            if (categoria === 'hojas') {
-                document.getElementById('filtro-categoria').value = 'Hoja';
-            } else if (categoria === 'puertas') {
-                document.getElementById('filtro-categoria').value = 'Puerta';
-            }
-            
-            document.getElementById('filtro-concepto').value = concepto;
+            document.getElementById('filtro-clave').value = clave;
             renderizarHistorial();
         }
 
-        function renderizarGraficoConceptos(salidas, canvasId, tipo) {
-            const conceptosKeys = [
-                'Perdida', 
-                'Salida a fabrica', 
-                'Salida empaque', 
-                'Venta de Segunda',
-                'Traspaso Almacen 4 a Almacen 3',
-                'Traspaso Almacen 3 a Almacen 4'
-            ];
+        function renderizarGraficoSalidas(salidasDataset, canvasId, tipoCat) {
+            const ctx = document.getElementById(canvasId);
+            if (!ctx) return;
 
-            const conceptos = { 
-                'Perdida': 0, 
-                'Salida a fabrica': 0, 
-                'Salida empaque': 0, 
-                'Venta de Segunda': 0,
-                'Traspaso Almacen 4 a Almacen 3': 0,
-                'Traspaso Almacen 3 a Almacen 4': 0
-            };
-
-            salidas.forEach(s => {
-                const c = s.concepto || s.motivo;
-                if (conceptos[c] !== undefined) {
-                    conceptos[c] += Number(s.cantidad || 0);
-                }
+            const conteoConceptos = {};
+            salidasDataset.forEach(m => {
+                const conc = m.concepto || m.motivo || 'General';
+                conteoConceptos[conc] = (conteoConceptos[conc] || 0) + Number(m.cantidad || 0);
             });
 
-            const ctx = document.getElementById(canvasId).getContext('2d');
+            const labels = Object.keys(conteoConceptos);
+            const dataValues = Object.values(conteoConceptos);
 
-            if (tipo === 'hojas' && chartSalidasHojasInstance) {
+            if (tipoCat === 'hojas' && chartSalidasHojasInstance) {
                 chartSalidasHojasInstance.destroy();
-            } else if (tipo === 'puertas' && chartSalidasPuertasInstance) {
+            } else if (tipoCat === 'puertas' && chartSalidasPuertasInstance) {
                 chartSalidasPuertasInstance.destroy();
             }
 
             const chartInstance = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
-                    labels: [
-                        'Pérdida (Desecho)', 
-                        'Salida a fábrica', 
-                        'Salida empaque', 
-                        'Venta de Segunda', 
-                        'Traspaso Alm. 4 ➔ 3', 
-                        'Traspaso Alm. 3 ➔ 4'
-                    ],
+                    labels: labels.length > 0 ? labels : ['Sin Salidas'],
                     datasets: [{
-                        data: [
-                            conceptos['Perdida'], 
-                            conceptos['Salida a fabrica'], 
-                            conceptos['Salida empaque'], 
-                            conceptos['Venta de Segunda'],
-                            conceptos['Traspaso Almacen 4 a Almacen 3'],
-                            conceptos['Traspaso Almacen 3 a Almacen 4']
-                        ],
-                        backgroundColor: ['#DC2626', '#D97706', '#3B4B44', '#059669', '#2563EB', '#9333EA'],
-                        borderWidth: 1
+                        data: dataValues.length > 0 ? dataValues : [1],
+                        backgroundColor: ['#3B4B44', '#E056fd', '#f0932b', '#eb4d4b', '#686de0', '#009432', '#1e90ff']
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    onClick: (evt, elements) => {
-                        if (elements && elements.length > 0) {
-                            const clickedIndex = elements[0].index;
-                            const conceptoSeleccionado = conceptosKeys[clickedIndex];
-                            if (conceptoSeleccionado) {
-                                filtrarHistorialPorConcepto(conceptoSeleccionado, tipo);
+                    plugins: {
+                        legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 } } }
+                    },
+                    onClick: (e, activeElements) => {
+                        if (activeElements.length > 0) {
+                            const index = activeElements[0].index;
+                            const conceptoSeleccionado = labels[index];
+                            if (conceptoSeleccionado && conceptoSeleccionado !== 'Sin Salidas') {
+                                cambiarPestana('historial');
+                                document.getElementById('filtro-tipo').value = 'SALIDA';
+                                document.getElementById('filtro-concepto').value = conceptoSeleccionado;
+                                renderizarHistorial();
                             }
                         }
-                    },
-                    onHover: (event, chartElement) => {
-                        event.native.target.style.cursor = chartElement[0] ? 'pointer' : 'default';
                     }
                 }
             });
 
-            if (tipo === 'hojas') chartSalidasHojasInstance = chartInstance;
+            if (tipoCat === 'hojas') chartSalidasHojasInstance = chartInstance;
             else chartSalidasPuertasInstance = chartInstance;
         }
 
         function renderizarHistorial() {
-            const tbody = document.getElementById('tabla-historial-body');
-            
-            const fCategoria = document.getElementById('filtro-categoria').value;
-            const fTipo = document.getElementById('filtro-tipo').value;
-            const fRecuperable = document.getElementById('filtro-recuperable').value;
-            const fConcepto = document.getElementById('filtro-concepto').value;
-            const fFechaDesde = document.getElementById('filtro-fecha-desde').value;
-            const fFechaHasta = document.getElementById('filtro-fecha-hasta').value;
-            const fClave = document.getElementById('filtro-clave').value.trim().toUpperCase();
+            const cat = document.getElementById('filtro-categoria').value;
+            const tipo = document.getElementById('filtro-tipo').value;
+            const recup = document.getElementById('filtro-recuperable').value;
+            const concepto = document.getElementById('filtro-concepto').value;
+            const fechaDesde = document.getElementById('filtro-fecha-desde').value;
+            const fechaHasta = document.getElementById('filtro-fecha-hasta').value;
+            const claveBuscada = document.getElementById('filtro-clave').value.trim().toUpperCase();
 
-            ultimosFiltrados = movimientos.filter(m => {
-                const catItem = m.categoria || 'Hoja'; 
-                const concItem = m.concepto || m.motivo || '';
-                const recupBool = m.es_recuperable === true || m.es_recuperable === 'Sí';
-                const recupText = recupBool ? 'Sí' : 'No';
+            let filtrados = movimientos.filter(m => {
+                if (cat && m.categoria !== cat) return false;
+                if (tipo && m.tipo !== tipo) return false;
+                
+                if (recup) {
+                    const esRecupVal = (m.es_recuperable === true || m.es_recuperable === 'Sí') ? 'Sí' : 'No';
+                    if (esRecupVal !== recup) return false;
+                }
 
-                const matchCategoria = !fCategoria || catItem === fCategoria;
-                const matchTipo = !fTipo || m.tipo === fTipo;
-                const matchRecuperable = !fRecuperable || recupText === fRecuperable;
-                const matchConcepto = !fConcepto || concItem === fConcepto;
-                const matchClave = !fClave || (m.clave && m.clave.toUpperCase().includes(fClave));
+                if (concepto) {
+                    const concVal = m.concepto || m.motivo || '';
+                    if (concVal !== concepto) return false;
+                }
 
-                let matchFecha = true;
-                if (fFechaDesde && m.fecha < fFechaDesde) matchFecha = false;
-                if (fFechaHasta && m.fecha > fFechaHasta) matchFecha = false;
+                if (fechaDesde && m.fecha < fechaDesde) return false;
+                if (fechaHasta && m.fecha > fechaHasta) return false;
 
-                return matchCategoria && matchTipo && matchRecuperable && matchConcepto && matchClave && matchFecha;
+                if (claveBuscada && !String(m.clave).toUpperCase().includes(claveBuscada)) return false;
+
+                return true;
             });
 
-            document.getElementById('contador-resultados').innerText = `Mostrando ${ultimosFiltrados.length} de ${movimientos.length} registros`;
-
-            const balanceNetoFiltrado = ultimosFiltrados.reduce((sum, m) => {
-                const cant = Number(m.cantidad || 0);
-                return m.tipo === 'SALIDA' ? sum - cant : sum + cant;
-            }, 0);
-
-            const elemTotal = document.getElementById('total-piezas-filtradas');
-            elemTotal.innerText = `${balanceNetoFiltrado.toLocaleString()} Pzas`;
-            elemTotal.className = `px-3 py-3 text-center text-base font-bold ${balanceNetoFiltrado >= 0 ? 'text-capex-dark' : 'text-red-600'}`;
-
+            ultimosFiltrados = filtrados;
+            const tbody = document.getElementById('tabla-historial-body');
             tbody.innerHTML = '';
 
-            if (ultimosFiltrados.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="10" class="text-center py-6 text-gray-400 font-medium">No se encontraron movimientos con los filtros seleccionados.</td></tr>`;
-                return;
+            let totalPiezasBalance = 0;
+
+            if (filtrados.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="10" class="text-center py-6 text-gray-400">No se encontraron movimientos registrados con esos filtros</td></tr>`;
+            } else {
+                filtrados.forEach(m => {
+                    const esIngreso = m.tipo === 'INGRESO';
+                    const cant = Number(m.cantidad || 0);
+                    if (esIngreso) totalPiezasBalance += cant;
+                    else totalPiezasBalance -= cant;
+
+                    const tr = document.createElement('tr');
+                    tr.className = "border-b hover:bg-gray-50 text-xs";
+
+                    const badgeTipo = esIngreso 
+                        ? `<span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 font-bold rounded">INGRESO</span>`
+                        : `<span class="px-2 py-0.5 bg-red-100 text-red-800 font-bold rounded">SALIDA</span>`;
+
+                    const badgeCat = `<span class="font-semibold text-gray-700">${m.categoria || 'Hoja'}</span>`;
+                    const recupTexto = (m.es_recuperable === true || m.es_recuperable === 'Sí') ? 'Sí' : 'No';
+                    
+                    let detalleExtra = '';
+                    if (esIngreso) {
+                        detalleExtra = `<span class="text-gray-600">Recup: <b>${recupTexto}</b></span>`;
+                    } else {
+                        const tipoSalidaBadge = `<span class="text-purple-700 font-bold">[${m.tipo_salida || 'Salida Manual'}]</span>`;
+                        detalleExtra = `${tipoSalidaBadge} <span class="text-red-700 font-semibold">${m.concepto || m.motivo || ''}</span>`;
+                    }
+
+                    tr.innerHTML = `
+                        <td class="px-3 py-2">${badgeCat}</td>
+                        <td class="px-3 py-2">${badgeTipo}</td>
+                        <td class="px-3 py-2">${formatearFechaCorta(m.fecha)}</td>
+                        <td class="px-3 py-2 font-mono font-bold text-capex">${m.folio_sae || ''}</td>
+                        <td class="px-3 py-2 font-mono font-bold">${m.clave}</td>
+                        <td class="px-3 py-2">${m.medida || ''}</td>
+                        <td class="px-3 py-2">${detalleExtra}</td>
+                        <td class="px-3 py-2 text-gray-600 truncate max-w-xs" title="${m.descripcion || ''}">${m.descripcion || ''}</td>
+                        <td class="px-3 py-2 text-center font-bold text-sm ${esIngreso ? 'text-emerald-700' : 'text-red-600'}">${esIngreso ? '+' : '-'}${cant}</td>
+                        <td class="px-3 py-2 text-center space-x-2">
+                            <button onclick="abrirModalEditar('${m.id}')" title="Editar Registro" class="text-blue-600 hover:text-blue-800"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick="eliminarRegistro('${m.id}')" title="Eliminar Registro" class="text-red-600 hover:text-red-800"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
             }
 
-            ultimosFiltrados.forEach(m => {
-                const tr = document.createElement('tr');
-                tr.className = "border-b hover:bg-gray-50";
-                
-                const esIngreso = m.tipo === 'INGRESO';
-                const catNombre = m.categoria || 'Hoja';
-                const recupTexto = (m.es_recuperable === true || m.es_recuperable === 'Sí') ? 'Sí' : 'No';
-
-                tr.innerHTML = `
-                    <td class="px-3 py-3">
-                        <span class="px-2 py-1 rounded text-xs font-semibold ${catNombre === 'Puerta' ? 'bg-amber-100 text-amber-800' : 'bg-gray-200 text-gray-800'}">
-                            ${catNombre}
-                        </span>
-                    </td>
-                    <td class="px-3 py-3">
-                        <span class="px-2 py-1 rounded text-xs font-bold ${esIngreso ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}">
-                            ${m.tipo}
-                        </span>
-                    </td>
-                    <td class="px-3 py-3">${formatearFechaCorta(m.fecha)}</td>
-                    <td class="px-3 py-3 font-semibold text-capex-dark font-mono">${m.folio_sae}</td>
-                    <td class="px-3 py-3 font-bold font-mono">${m.clave}</td>
-                    <td class="px-3 py-3">${m.medida || 'N/A'}</td>
-                    <td class="px-3 py-3 font-semibold">${esIngreso ? 'Recup: ' + recupTexto : (m.concepto || m.motivo) + ' (Recup: ' + recupTexto + ')'}</td>
-                    <td class="px-3 py-3">${m.descripcion}</td>
-                    <td class="px-3 py-3 text-center font-bold ${esIngreso ? 'text-emerald-600' : 'text-red-600'}">
-                        ${esIngreso ? '+' : '-'}${m.cantidad}
-                    </td>
-                    <td class="px-3 py-3 text-center space-x-1">
-                        <button onclick="abrirModalEditar('${m.id}')" title="Editar Registro" class="text-blue-600 hover:text-blue-800 font-semibold text-xs bg-blue-50 px-2 py-1 rounded border border-blue-200">
-                            <i class="fa-solid fa-pen-to-square"></i>
-                        </button>
-                        <button onclick="reimprimirPorFolio('${m.folio_sae}')" title="Reimprimir Orden" class="text-capex hover:text-capex-dark font-semibold text-xs bg-capex-soft px-2 py-1 rounded border border-capex/20">
-                            <i class="fa-solid fa-print"></i>
-                        </button>
-                        <button onclick="eliminarRegistro('${m.id}')" title="Eliminar Registro" class="text-red-600 hover:text-red-800 font-semibold text-xs bg-red-50 px-2 py-1 rounded border border-red-200">
-                            <i class="fa-solid fa-trash-can"></i>
-                        </button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
+            document.getElementById('total-piezas-filtradas').innerText = `${totalPiezasBalance.toLocaleString()} Pzas`;
+            document.getElementById('contador-resultados').innerText = `Mostrando ${filtrados.length} de ${movimientos.length} registros totales`;
         }
 
         function limpiarFiltrosHistorial() {
@@ -1884,107 +1863,44 @@
             renderizarHistorial();
         }
 
-        function reimprimirPorFolio(folio) {
-            const items = movimientos.filter(m => m.folio_sae === folio);
-            if (items.length > 0) {
-                const mapeados = items.map(m => ({
-                    ...m,
-                    concepto: m.concepto || m.motivo,
-                    comentarios: m.comentarios || m.observaciones
-                }));
-                imprimirOrdenGrupo(mapeados);
-            }
-        }
-
         function imprimirReporteGeneral() {
-            const tbodyReporte = document.getElementById('tabla-reporte-body');
-            tbodyReporte.innerHTML = '';
+            const datasetReporte = ultimosFiltrados.length > 0 ? ultimosFiltrados : movimientos;
+            
+            document.getElementById('reporte-fecha-impresion').innerText = new Date().toLocaleDateString();
+            document.getElementById('reporte-total-registros').innerText = datasetReporte.length;
 
-            const hoy = new Date();
-            const dia = String(hoy.getDate()).padStart(2, '0');
-            const mes = String(hoy.getMonth() + 1).padStart(2, '0');
-            const anio = hoy.getFullYear();
-            const fechaCortaHoy = `${dia}/${mes}/${anio}`;
+            const tbody = document.getElementById('tabla-reporte-body');
+            tbody.innerHTML = '';
 
-            document.getElementById('reporte-fecha-impresion').innerText = fechaCortaHoy;
-            document.getElementById('reporte-total-registros').innerText = ultimosFiltrados.length;
+            datasetReporte.forEach(m => {
+                const esIng = m.tipo === 'INGRESO';
+                const recupTxt = (m.es_recuperable === true || m.es_recuperable === 'Sí') ? 'Sí' : 'No';
+                const detalleTxt = esIng ? `Recup: ${recupTxt}` : `[${m.tipo_salida || 'Salida Manual'}] ${m.concepto || m.motivo || ''}`;
 
-            let notasFiltro = [];
-            const fCat = document.getElementById('filtro-categoria').value;
-            const fTipo = document.getElementById('filtro-tipo').value;
-            const fRecup = document.getElementById('filtro-recuperable').value;
-            const fConc = document.getElementById('filtro-concepto').value;
-            const fDesde = document.getElementById('filtro-fecha-desde').value;
-            const fHasta = document.getElementById('filtro-fecha-hasta').value;
-            const fClave = document.getElementById('filtro-clave').value.trim();
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="border border-gray-300 px-2 py-1">${m.categoria || 'Hoja'}</td>
+                    <td class="border border-gray-300 px-2 py-1 font-bold ${esIng ? 'text-emerald-700' : 'text-red-600'}">${m.tipo}</td>
+                    <td class="border border-gray-300 px-2 py-1">${formatearFechaCorta(m.fecha)}</td>
+                    <td class="border border-gray-300 px-2 py-1 font-mono">${m.folio_sae || ''}</td>
+                    <td class="border border-gray-300 px-2 py-1 font-mono font-bold">${m.clave}</td>
+                    <td class="border border-gray-300 px-2 py-1">${m.medida || ''}</td>
+                    <td class="border border-gray-300 px-2 py-1">${detalleTxt}</td>
+                    <td class="border border-gray-300 px-2 py-1 text-gray-700">${m.descripcion || ''}</td>
+                    <td class="border border-gray-300 px-2 py-1 text-center font-bold">${esIng ? '+' : '-'}${m.cantidad}</td>
+                `;
+                tbody.appendChild(tr);
+            });
 
-            if (fCat) notasFiltro.push(`Cat: ${fCat}`);
-            if (fTipo) notasFiltro.push(`Tipo: ${fTipo}`);
-            if (fRecup) notasFiltro.push(`Recuperable: ${fRecup}`);
-            if (fConc) notasFiltro.push(`Concepto: ${fConc}`);
-            if (fDesde || fHasta) {
-                const dCorta = fDesde ? formatearFechaCorta(fDesde) : 'Inicio';
-                const hCorta = fHasta ? formatearFechaCorta(fHasta) : 'Hoy';
-                notasFiltro.push(`Rango: ${dCorta} al ${hCorta}`);
-            }
-            if (fClave) notasFiltro.push(`Clave: ${fClave}`);
-
-            document.getElementById('reporte-filtros-aplicados').innerText = notasFiltro.length > 0 ? `Filtros: ${notasFiltro.join(' | ')}` : 'Filtros: Todos los registros';
-
-            if (ultimosFiltrados.length === 0) {
-                tbodyReporte.innerHTML = `<tr><td colspan="9" class="text-center py-4 border text-gray-500">No hay datos que coincidan con la búsqueda.</td></tr>`;
-            } else {
-                ultimosFiltrados.forEach(m => {
-                    const esIngreso = m.tipo === 'INGRESO';
-                    const catNombre = m.categoria || 'Hoja';
-                    const recupTexto = (m.es_recuperable === true || m.es_recuperable === 'Sí') ? 'Sí' : 'No';
-
-                    const tr = document.createElement('tr');
-                    tr.className = "border-b";
-                    tr.innerHTML = `
-                        <td class="border border-gray-300 px-2 py-1 font-semibold">${catNombre}</td>
-                        <td class="border border-gray-300 px-2 py-1 font-bold ${esIngreso ? 'text-emerald-700' : 'text-red-700'}">${m.tipo}</td>
-                        <td class="border border-gray-300 px-2 py-1">${formatearFechaCorta(m.fecha)}</td>
-                        <td class="border border-gray-300 px-2 py-1 font-mono">${m.folio_sae}</td>
-                        <td class="border border-gray-300 px-2 py-1 font-mono font-bold">${m.clave}</td>
-                        <td class="border border-gray-300 px-2 py-1">${m.medida || 'N/A'}</td>
-                        <td class="border border-gray-300 px-2 py-1">${esIngreso ? 'Recup: ' + recupTexto : (m.concepto || m.motivo) + ' (Recup: ' + recupTexto + ')'}</td>
-                        <td class="border border-gray-300 px-2 py-1">${m.descripcion}</td>
-                        <td class="border border-gray-300 px-2 py-1 text-center font-bold ${esIngreso ? 'text-emerald-700' : 'text-red-700'}">${esIngreso ? '+' : '-'}${m.cantidad}</td>
-                    `;
-                    tbodyReporte.appendChild(tr);
-                });
-            }
-
-            const seccionReporte = document.getElementById('seccion-reporte-impresion');
-            seccionReporte.classList.remove('hidden');
-            seccionReporte.classList.add('active-print');
+            const reporteSection = document.getElementById('seccion-reporte-impresion');
+            reporteSection.classList.remove('hidden');
+            reporteSection.classList.add('active-print');
 
             window.print();
 
-            seccionReporte.classList.remove('active-print');
-            seccionReporte.classList.add('hidden');
-        }
-
-        function toggleDetalleMedida(medida) {
-            const idSaneado = medida.replace(/\s+/g, '-');
-            const trDetalle = document.getElementById(`detalle-medida-${idSaneado}`);
-            const icono = document.getElementById(`icon-medida-${idSaneado}`);
-
-            if (trDetalle) {
-                trDetalle.classList.toggle('hidden');
-                if (icono) {
-                    icono.classList.toggle('rotate-90');
-                }
-            }
-        }
-
-        function verMovimientosClave(clave) {
+            reporteSection.classList.remove('active-print');
+            reporteSection.classList.add('hidden');
             cambiarPestana('historial');
-            limpiarFiltrosHistorial();
-            const inputClave = document.getElementById('filtro-clave');
-            inputClave.value = clave;
-            renderizarHistorial();
         }
     </script>
 </body>
