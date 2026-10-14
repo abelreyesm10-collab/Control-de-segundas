@@ -293,15 +293,15 @@
             </div>
         </div>
 
-        <!-- FORMULARIO DE INGRESO -->
+        <!-- FORMULARIO DE INGRESO (MÚLTIPLES CLAVES) -->
         <div id="vista-nuevo-registro" class="hidden">
-            <div class="max-w-3xl mx-auto bg-white p-8 rounded-lg shadow-md border-t-4 border-capex">
+            <div class="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-md border-t-4 border-capex">
                 <h2 class="text-2xl font-bold mb-6 text-capex-dark border-b pb-2">
-                    <i class="fa-solid fa-arrow-right-to-bracket mr-2 text-capex"></i>Registrar Ingreso de Material
+                    <i class="fa-solid fa-arrow-right-to-bracket mr-2 text-capex"></i>Registrar Ingreso de Material (Múltiples Claves)
                 </h2>
                 
                 <form id="form-ingreso" onsubmit="guardarIngreso(event)" class="space-y-4">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
                             <label class="block text-sm font-semibold text-gray-700 mb-1">Categoría del Producto</label>
                             <select id="categoria_producto" onchange="actualizarOpcionesClaves('ingreso')" class="w-full border rounded-md p-2 bg-white font-bold text-capex focus:ring-2 focus:ring-capex">
@@ -318,59 +318,44 @@
                             <input type="text" id="folio_sae" readonly class="w-full border rounded-md p-2 bg-gray-100 font-bold font-mono text-capex">
                         </div>
 
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">Clave del Producto</label>
-                            <select id="clave" onchange="autocompletarIngreso()" required class="w-full border rounded-md p-2 bg-white focus:ring-2 focus:ring-capex font-mono text-sm">
-                            </select>
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">Modelo</label>
-                            <input type="text" id="modelo" placeholder="Se llena automáticamente al elegir clave" required class="w-full border rounded-md p-2 focus:ring-2 focus:ring-capex">
-                        </div>
-
-                        <div class="md:col-span-2">
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">Descripción del Producto</label>
-                            <input type="text" id="descripcion" placeholder="Se llena automáticamente al elegir clave" required class="w-full border rounded-md p-2 focus:ring-2 focus:ring-capex">
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">Medida Original</label>
-                            <input type="text" id="medida" placeholder="Se llena automáticamente al elegir clave" required class="w-full border rounded-md p-2 focus:ring-2 focus:ring-capex">
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">Cantidad a Ingresar</label>
-                            <input type="number" id="cantidad" min="1" required class="w-full border rounded-md p-2 focus:ring-2 focus:ring-capex">
-                        </div>
-                    </div>
-
-                    <div class="border-t border-b py-4 my-2 bg-capex-soft p-4 rounded-md">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-                            <div>
-                                <label class="block text-sm font-bold text-capex-dark mb-1">¿Es Recuperable / Venta Segunda?</label>
-                                <select id="es_recuperable" onchange="evaluarRecuperable()" class="w-full border border-capex/30 rounded-md p-2 bg-white font-semibold focus:ring-2 focus:ring-capex">
-                                    <option value="No">No (Scrap / Desecho)</option>
-                                    <option value="Sí">Sí (Apta para Refilar, Reajuste o Remate)</option>
-                                </select>
-                            </div>
-                            
-                            <div id="contenedor-medida-ajustar" class="hidden">
-                                <label class="block text-sm font-bold text-capex-dark mb-1">¿A qué medida o estado se ajustará?</label>
-                                <input type="text" id="medida_ajustar" placeholder="Ej: 80x200 cm o Apto Remate" class="w-full border border-capex/40 rounded-md p-2 bg-white focus:ring-2 focus:ring-capex">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
+                        <div class="md:col-span-3">
                             <label class="block text-sm font-semibold text-gray-700 mb-1">Autorizado por</label>
                             <input type="text" id="autorizado_por" placeholder="Nombre del responsable" required class="w-full border rounded-md p-2 focus:ring-2 focus:ring-capex">
                         </div>
                     </div>
 
+                    <!-- TABLA DINÁMICA DE PARTIDAS DE INGRESO -->
+                    <div class="border rounded-md p-4 bg-gray-50 space-y-3">
+                        <div class="flex justify-between items-center border-b pb-2">
+                            <h3 class="text-sm font-bold text-gray-800 uppercase tracking-wide">
+                                <i class="fa-solid fa-list-check text-capex mr-2"></i>Claves / Productos a Ingresar
+                            </h3>
+                            <button type="button" onclick="agregarPartidaIngreso()" class="px-3 py-1 bg-capex hover:bg-capex-dark text-white text-xs font-semibold rounded shadow transition flex items-center">
+                                <i class="fa-solid fa-plus mr-1"></i>Agregar Clave
+                            </button>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-xs text-left">
+                                <thead class="bg-gray-200 text-gray-700 font-bold uppercase">
+                                    <tr>
+                                        <th class="p-2 w-1/4">Clave</th>
+                                        <th class="p-2">Descripción</th>
+                                        <th class="p-2 w-24">Medida</th>
+                                        <th class="p-2 w-32">¿Es Recuperable?</th>
+                                        <th class="p-2 w-32">Medida o Estado a Ajustar</th>
+                                        <th class="p-2 w-16 text-center">Cant.</th>
+                                        <th class="p-2 w-10 text-center">Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="contenedor-partidas-ingreso" class="divide-y divide-gray-200">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
                     <div class="pt-4 flex justify-end space-x-3">
-                        <button type="reset" onclick="evaluarRecuperable()" class="px-4 py-2 border rounded-md text-gray-600 hover:bg-gray-100">Limpiar</button>
+                        <button type="button" onclick="limpiarFormularioIngreso()" class="px-4 py-2 border rounded-md text-gray-600 hover:bg-gray-100">Limpiar</button>
                         <button type="submit" class="px-6 py-2 bg-capex text-white rounded-md hover:bg-capex-dark font-semibold shadow">
                             Guardar y Generar Orden de Ingreso
                         </button>
@@ -404,7 +389,6 @@
                             <input type="text" id="salida_folio" readonly class="w-full border rounded-md p-2 bg-gray-100 font-bold font-mono text-red-600">
                         </div>
 
-                        <!-- NUEVO: TIPO DE SALIDA (Manual o PROD) -->
                         <div>
                             <label class="block text-sm font-bold text-red-900 mb-1">Tipo de Salida</label>
                             <select id="salida_tipo_salida" required class="w-full border border-red-300 rounded-md p-2 bg-white font-bold text-red-800 focus:ring-2 focus:ring-red-500">
@@ -849,18 +833,9 @@
 
         function actualizarOpcionesClaves(tipoFormulario) {
             if (tipoFormulario === 'ingreso') {
-                const categoria = document.getElementById('categoria_producto').value;
-                const catalogo = obtenerCatalogo(categoria);
-                const selectClave = document.getElementById('clave');
-
-                selectClave.innerHTML = '<option value="" disabled selected>Seleccione una clave...</option>';
-                for (const clave in catalogo) {
-                    const opt = document.createElement('option');
-                    opt.value = clave;
-                    opt.textContent = `${clave} - ${catalogo[clave].descripcion}`;
-                    selectClave.appendChild(opt);
-                }
-                autocompletarIngreso();
+                const contenedor = document.getElementById('contenedor-partidas-ingreso');
+                contenedor.innerHTML = '';
+                agregarPartidaIngreso();
             } else if (tipoFormulario === 'salida') {
                 const contenedor = document.getElementById('contenedor-partidas-salida');
                 contenedor.innerHTML = '';
@@ -868,20 +843,105 @@
             }
         }
 
-        function autocompletarIngreso() {
+        function agregarPartidaIngreso() {
             const categoria = document.getElementById('categoria_producto').value;
             const catalogo = obtenerCatalogo(categoria);
-            const claveSelect = document.getElementById('clave').value;
-            const item = catalogo[claveSelect];
-            if (item) {
-                document.getElementById('descripcion').value = item.descripcion;
-                document.getElementById('medida').value = item.medida;
-                document.getElementById('modelo').value = item.modelo || '';
-            } else {
-                document.getElementById('descripcion').value = '';
-                document.getElementById('medida').value = '';
-                document.getElementById('modelo').value = '';
+            const contenedor = document.getElementById('contenedor-partidas-ingreso');
+
+            const tr = document.createElement('tr');
+            tr.className = "fila-partida-ingreso";
+
+            let optionsClaves = '<option value="" disabled selected>Seleccionar clave...</option>';
+            for (const clave in catalogo) {
+                optionsClaves += `<option value="${clave}">${clave} - ${catalogo[clave].descripcion}</option>`;
             }
+
+            tr.innerHTML = `
+                <td class="p-1">
+                    <select onchange="autocompletarFilaIngreso(this)" required class="ingreso-clave-input w-full border rounded p-1 text-xs font-mono bg-white focus:ring-1 focus:ring-capex">
+                        ${optionsClaves}
+                    </select>
+                </td>
+                <td class="p-1">
+                    <input type="text" readonly class="ingreso-desc-input w-full border rounded p-1 text-xs bg-gray-100 text-gray-600">
+                </td>
+                <td class="p-1">
+                    <input type="text" required class="ingreso-medida-input w-full border rounded p-1 text-xs focus:ring-1 focus:ring-capex">
+                </td>
+                <td class="p-1">
+                    <select onchange="evaluarFilaRecuperable(this)" class="ingreso-recuperable-input w-full border rounded p-1 text-xs bg-white focus:ring-1 focus:ring-capex font-semibold">
+                        <option value="No">No (Scrap)</option>
+                        <option value="Sí">Sí (Recuperable)</option>
+                    </select>
+                </td>
+                <td class="p-1">
+                    <input type="text" placeholder="N/A o Medida" class="ingreso-ajustar-input w-full border rounded p-1 text-xs bg-gray-100 text-gray-500" disabled>
+                </td>
+                <td class="p-1">
+                    <input type="number" min="1" value="1" required class="ingreso-cant-input w-full border rounded p-1 text-xs text-center font-bold focus:ring-1 focus:ring-capex">
+                </td>
+                <td class="p-1 text-center">
+                    <button type="button" onclick="eliminarFilaIngreso(this)" title="Quitar Fila" class="text-red-500 hover:text-red-700 font-bold px-2 py-1">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                </td>
+            `;
+
+            contenedor.appendChild(tr);
+        }
+
+        function eliminarFilaIngreso(btn) {
+            const filas = document.querySelectorAll('.fila-partida-ingreso');
+            if (filas.length <= 1) {
+                alert("Debe haber al menos una clave para generar el ingreso.");
+                return;
+            }
+            btn.closest('tr').remove();
+        }
+
+        function autocompletarFilaIngreso(selectElem) {
+            const fila = selectElem.closest('tr');
+            const categoria = document.getElementById('categoria_producto').value;
+            const catalogo = obtenerCatalogo(categoria);
+            const clave = selectElem.value;
+            const item = catalogo[clave];
+
+            const inputDesc = fila.querySelector('.ingreso-desc-input');
+            const inputMedida = fila.querySelector('.ingreso-medida-input');
+
+            if (item) {
+                inputDesc.value = item.descripcion;
+                inputMedida.value = item.medida;
+            } else {
+                inputDesc.value = '';
+                inputMedida.value = '';
+            }
+        }
+
+        function evaluarFilaRecuperable(selectElem) {
+            const fila = selectElem.closest('tr');
+            const esRecup = selectElem.value === 'Sí';
+            const inputAjustar = fila.querySelector('.ingreso-ajustar-input');
+
+            if (esRecup) {
+                inputAjustar.removeAttribute('disabled');
+                inputAjustar.classList.remove('bg-gray-100', 'text-gray-500');
+                inputAjustar.classList.add('bg-white');
+                inputAjustar.placeholder = "Ej: 80x200 cm o Apto Remate";
+            } else {
+                inputAjustar.setAttribute('disabled', 'true');
+                inputAjustar.classList.add('bg-gray-100', 'text-gray-500');
+                inputAjustar.classList.remove('bg-white');
+                inputAjustar.value = '';
+                inputAjustar.placeholder = "N/A";
+            }
+        }
+
+        function limpiarFormularioIngreso() {
+            document.getElementById('form-ingreso').reset();
+            document.getElementById('fecha').valueAsDate = new Date();
+            actualizarOpcionesClaves('ingreso');
+            generarFoliosConsecutivos();
         }
 
         function agregarPartidaSalida() {
@@ -1019,21 +1079,6 @@
             document.getElementById('salida_folio').value = `SAL-${String(numSalida).padStart(5, '0')}`;
         }
 
-        function evaluarRecuperable() {
-            const esRecuperable = document.getElementById('es_recuperable').value;
-            const contenedorAjuste = document.getElementById('contenedor-medida-ajustar');
-            const campoAjuste = document.getElementById('medida_ajustar');
-
-            if (esRecuperable === 'Sí') {
-                contenedorAjuste.classList.remove('hidden');
-                campoAjuste.setAttribute('required', 'true');
-            } else {
-                contenedorAjuste.classList.add('hidden');
-                campoAjuste.removeAttribute('required');
-                campoAjuste.value = '';
-            }
-        }
-
         async function cambiarPestana(pestana) {
             ['vista-dashboard-hojas', 'vista-dashboard-puertas', 'vista-nuevo-registro', 'vista-nueva-salida', 'vista-historial'].forEach(v => {
                 document.getElementById(v).classList.add('hidden');
@@ -1070,59 +1115,87 @@
 
         async function guardarIngreso(e) {
             e.preventDefault();
-            const esRecuperable = document.getElementById('es_recuperable').value;
+            const categoria = document.getElementById('categoria_producto').value;
+            const fecha = document.getElementById('fecha').value;
+            const folio = document.getElementById('folio_sae').value;
+            const autorizado = document.getElementById('autorizado_por').value;
 
-            const nuevoItem = {
-                categoria: document.getElementById('categoria_producto').value,
-                tipo: 'INGRESO',
-                fecha: document.getElementById('fecha').value,
-                folio_sae: document.getElementById('folio_sae').value,
-                clave: document.getElementById('clave').value,
-                descripcion: document.getElementById('descripcion').value,
-                modelo: document.getElementById('modelo').value,
-                medida: document.getElementById('medida').value.trim(),
-                cantidad: parseInt(document.getElementById('cantidad').value),
-                es_recuperable: esRecuperable,
-                medida_ajustar: esRecuperable === 'Sí' ? document.getElementById('medida_ajustar').value.trim() : 'N/A',
-                autorizado_por: document.getElementById('autorizado_por').value
-            };
+            const catalogo = obtenerCatalogo(categoria);
+            const filasPartidas = document.querySelectorAll('.fila-partida-ingreso');
 
-            const payloadLimpio = {
-                categoria: nuevoItem.categoria,
-                tipo: nuevoItem.tipo,
-                fecha: nuevoItem.fecha,
-                folio_sae: nuevoItem.folio_sae,
-                clave: nuevoItem.clave,
-                descripcion: nuevoItem.descripcion,
-                medida: nuevoItem.medida,
-                cantidad: nuevoItem.cantidad,
-                es_recuperable: nuevoItem.es_recuperable === 'Sí',
-                medida_ajustar: nuevoItem.medida_ajustar,
-                autorizado_por: nuevoItem.autorizado_por
-            };
+            if (filasPartidas.length === 0) {
+                alert("Debe agregar al menos una partida al ingreso.");
+                return;
+            }
+
+            const listaIngresosPayload = [];
+            const listaItemsImpresion = [];
+
+            filasPartidas.forEach(fila => {
+                const clave = fila.querySelector('.ingreso-clave-input').value;
+                const descripcion = fila.querySelector('.ingreso-desc-input').value;
+                const medida = fila.querySelector('.ingreso-medida-input').value.trim();
+                const esRecuperableVal = fila.querySelector('.ingreso-recuperable-input').value;
+                const esRecuperable = esRecuperableVal === 'Sí';
+                const medidaAjustar = esRecuperable ? (fila.querySelector('.ingreso-ajustar-input').value.trim() || 'Apto Remate') : 'N/A';
+                const cantidad = parseInt(fila.querySelector('.ingreso-cant-input').value);
+                const itemCat = catalogo[clave] || {};
+
+                if (clave && cantidad > 0) {
+                    listaIngresosPayload.push({
+                        categoria: categoria,
+                        tipo: 'INGRESO',
+                        fecha: fecha,
+                        folio_sae: folio,
+                        clave: clave,
+                        descripcion: descripcion,
+                        medida: medida,
+                        cantidad: cantidad,
+                        es_recuperable: esRecuperable,
+                        medida_ajustar: medidaAjustar,
+                        autorizado_por: autorizado
+                    });
+
+                    listaItemsImpresion.push({
+                        categoria: categoria,
+                        tipo: 'INGRESO',
+                        fecha: fecha,
+                        folio_sae: folio,
+                        clave: clave,
+                        modelo: itemCat.modelo || 'N/A',
+                        descripcion: descripcion,
+                        medida: medida,
+                        es_recuperable: esRecuperable ? 'Sí' : 'No',
+                        medida_ajustar: medidaAjustar,
+                        cantidad: cantidad,
+                        autorizado_por: autorizado
+                    });
+                }
+            });
 
             try {
                 const { data, error } = await supabaseClient
                     .from('movimientos_merma')
-                    .insert([payloadLimpio])
+                    .insert(listaIngresosPayload)
                     .select();
 
                 if (error) throw error;
 
                 if (data && data.length > 0) {
-                    const registroInsertado = { ...data[0], modelo: nuevoItem.modelo };
-                    movimientos.unshift(registroInsertado);
+                    data.forEach(dbItem => {
+                        const original = listaItemsImpresion.find(i => i.clave === dbItem.clave) || {};
+                        movimientos.unshift({
+                            ...dbItem,
+                            modelo: original.modelo,
+                            medida_ajustar: original.medida_ajustar
+                        });
+                    });
                 }
 
-                imprimirOrdenGrupo([nuevoItem]);
-
-                document.getElementById('form-ingreso').reset();
-                document.getElementById('fecha').valueAsDate = new Date();
-                actualizarOpcionesClaves('ingreso');
-                generarFoliosConsecutivos();
-                evaluarRecuperable();
+                imprimirOrdenGrupo(listaItemsImpresion);
+                limpiarFormularioIngreso();
             } catch (err) {
-                console.error("Error al guardar ingreso:", err.message);
+                console.error("Error al guardar el ingreso múltiple:", err.message);
                 alert("Ocurrió un error al guardar en Supabase: " + err.message);
             }
         }
@@ -1428,8 +1501,7 @@
 
                 gridDetalles.innerHTML = `
                     <div><span class="font-bold text-gray-700">Categoría:</span> <span class="font-bold uppercase ml-2">${catNombre}</span></div>
-                    <div><span class="font-bold text-gray-700">¿Es Recuperable / Remate?:</span> <span class="font-bold uppercase ml-2">${primerItem.es_recuperable}</span></div>
-                    <div class="col-span-2"><span class="font-bold text-gray-700">Ajuste / Observación:</span> <span class="ml-2 font-semibold">${primerItem.medida_ajustar}</span></div>
+                    <div class="col-span-2"><span class="font-bold text-gray-700">Nota:</span> <span class="ml-2 font-semibold">Orden de ingreso con múltiples partidas detalladas.</span></div>
                 `;
             } else {
                 const tipoSalidaVal = primerItem.tipo_salida || 'Salida Manual';
@@ -1540,258 +1612,244 @@
                         const clavesMedida = [...new Set(hojasMedida.map(m => m.clave))];
 
                         let htmlDetalle = `<td colspan="4" class="px-4 py-2 text-xs">
-                            <div class="font-semibold text-capex mb-1"><i class="fa-solid fa-layer-group mr-1"></i>Hojas registradas en medida ${medida}:</div>
-                            <table class="w-full text-xs bg-white rounded border">
-                                <thead class="bg-gray-100">
-                                    <tr>
-                                        <th class="p-1 text-left">Clave</th>
-                                        <th class="p-1 text-left">Descripción</th>
-                                        <th class="p-1 text-right">Stock</th>
-                                    </tr>
-                                </thead>
-                                <tbody>`;
+                            <div class="font-semibold text-capex mb-1"><i class="fa-solid fa-info-circle mr-1"></i> Desglose de Claves para Medida: ${medida}</div>
+                            <table class="w-full bg-white border rounded">
+                                <tr class="bg-gray-100 font-bold"><th class="p-1">Clave</th><th class="p-1">Descripción</th><th class="p-1 text-center">Ing.</th><th class="p-1 text-center">Sal.</th><th class="p-1 text-right">Stock</th></tr>`;
 
-                        clavesMedida.forEach(c => {
-                            const itemCat = CATALOGO_HOJAS[c] || CATALOGO_PUERTAS[c] || {};
-                            const cIng = ingresos.filter(m => m.clave === c).reduce((s, m) => s + Number(m.cantidad || 0), 0);
-                            const cSal = salidas.filter(m => m.clave === c).reduce((s, m) => s + Number(m.cantidad || 0), 0);
-                            const cStock = cIng - cSal;
-
-                            htmlDetalle += `
-                                <tr class="border-t hover:bg-emerald-50 cursor-pointer" onclick="event.stopPropagation(); verMovimientosClave('${c}')">
-                                    <td class="p-1 font-mono font-bold text-capex">${c}</td>
-                                    <td class="p-1 text-gray-600">${itemCat.descripcion || ''}</td>
-                                    <td class="p-1 text-right font-bold ${cStock > 0 ? 'text-gray-800' : 'text-red-500'}">${cStock} pzas</td>
-                                </tr>`;
+                        clavesMedida.forEach(clave => {
+                            const ingClave = ingresos.filter(m => m.medida === medida && m.clave === clave).reduce((s, m) => s + Number(m.cantidad || 0), 0);
+                            const salClave = salidas.filter(m => m.medida === medida && m.clave === clave).reduce((s, m) => s + Number(m.cantidad || 0), 0);
+                            const itemRef = hojasMedida.find(m => m.clave === clave) || {};
+                            htmlDetalle += `<tr>
+                                <td class="p-1 font-mono font-bold">${clave}</td>
+                                <td class="p-1">${itemRef.descripcion || ''}</td>
+                                <td class="p-1 text-center text-emerald-600">${ingClave}</td>
+                                <td class="p-1 text-center text-red-600">${salClave}</td>
+                                <td class="p-1 text-right font-bold">${ingClave - salClave}</td>
+                            </tr>`;
                         });
-
-                        htmlDetalle += `</tbody></table></td>`;
+                        htmlDetalle += `</table></td>`;
                         trDetalle.innerHTML = htmlDetalle;
                         tablaMedidas.appendChild(trDetalle);
                     });
                 }
 
-                renderizarTablaClaves(dataset, 'tabla-dashboard-stock', ingresos, salidas);
+                const clavesSet = new Set(dataset.map(m => m.clave).filter(Boolean));
+                const tablaStock = document.getElementById('tabla-dashboard-stock');
+                tablaStock.innerHTML = '';
 
-                const clavesHojasSet = new Set(dataset.map(m => m.clave).filter(Boolean));
-                const tablaModelosHojas = document.getElementById('tabla-dashboard-modelos-hojas');
-                if (tablaModelosHojas) {
-                    tablaModelosHojas.innerHTML = '';
-                    if (clavesHojasSet.size === 0) {
-                        tablaModelosHojas.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-gray-400">Sin registros de hojas</td></tr>`;
-                    } else {
-                        clavesHojasSet.forEach(c => {
-                            const itemCat = CATALOGO_HOJAS[c] || {};
-                            const movsClave = dataset.filter(m => m.clave === c);
-                            
-                            let recupCount = 0;
-                            let scrapCount = 0;
+                if (clavesSet.size === 0) {
+                    tablaStock.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-gray-400">Sin claves registradas</td></tr>`;
+                } else {
+                    clavesSet.forEach(clave => {
+                        const ing = ingresos.filter(m => m.clave === clave).reduce((s, m) => s + Number(m.cantidad || 0), 0);
+                        const sal = salidas.filter(m => m.clave === clave).reduce((s, m) => s + Number(m.cantidad || 0), 0);
+                        const stockClave = ing - sal;
+                        const itemRef = dataset.find(m => m.clave === clave) || {};
 
-                            movsClave.forEach(m => {
-                                const esIng = m.tipo === 'INGRESO';
-                                const esRecup = m.es_recuperable === true || m.es_recuperable === 'Sí';
-                                const cant = Number(m.cantidad || 0);
-
-                                if (esIng) {
-                                    if (esRecup) recupCount += cant;
-                                    else scrapCount += cant;
-                                } else {
-                                    if (esRecup) recupCount -= cant;
-                                    else scrapCount -= cant;
-                                }
-                            });
-
-                            recupCount = Math.max(0, recupCount);
-                            scrapCount = Math.max(0, scrapCount);
-                            const totalStockClave = recupCount + scrapCount;
-
-                            const tr = document.createElement('tr');
-                            tr.className = "border-b hover:bg-gray-50";
-                            tr.innerHTML = `
-                                <td class="px-3 py-2 font-mono font-bold text-capex">${c}</td>
-                                <td class="px-3 py-2 text-gray-700">${itemCat.descripcion || 'Personalizada'}</td>
-                                <td class="px-3 py-2 text-center font-bold text-emerald-700">${recupCount} pzas</td>
-                                <td class="px-3 py-2 text-center font-bold text-red-600">${scrapCount} pzas</td>
-                                <td class="px-3 py-2 text-right font-bold text-gray-900">${totalStockClave} pzas</td>
-                            `;
-                            tablaModelosHojas.appendChild(tr);
-                        });
-                    }
+                        const tr = document.createElement('tr');
+                        tr.className = "border-b hover:bg-gray-50";
+                        tr.innerHTML = `
+                            <td class="px-3 py-2 font-mono font-bold text-capex-dark">${clave} <span class="block text-xs font-normal text-gray-500">${itemRef.descripcion || ''}</span></td>
+                            <td class="px-3 py-2 text-center text-emerald-600 font-medium">+${ing}</td>
+                            <td class="px-3 py-2 text-center text-red-600 font-medium">-${sal}</td>
+                            <td class="px-3 py-2 text-right font-bold ${stockClave > 0 ? 'text-gray-900' : 'text-red-500'}">${stockClave} pzas</td>
+                        `;
+                        tablaStock.appendChild(tr);
+                    });
                 }
 
-                renderizarGraficoSalidas(salidas, 'graficoConceptoSalidas', 'hojas');
+                const tablaModelosHojas = document.getElementById('tabla-dashboard-modelos-hojas');
+                tablaModelosHojas.innerHTML = '';
 
-            } else if (tipo === 'puertas') {
-                let totalRecupPuertas = 0;
+                if (clavesSet.size === 0) {
+                    tablaModelosHojas.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-gray-400">Sin registros para desglosar</td></tr>`;
+                } else {
+                    clavesSet.forEach(clave => {
+                        const itemRef = dataset.find(m => m.clave === clave) || {};
+                        let recupClave = 0;
+                        let scrapClave = 0;
+
+                        ingresos.filter(m => m.clave === clave).forEach(m => {
+                            const esRecup = m.es_recuperable === true || m.es_recuperable === 'Sí';
+                            if (esRecup) recupClave += Number(m.cantidad || 0);
+                            else scrapClave += Number(m.cantidad || 0);
+                        });
+
+                        salidas.filter(m => m.clave === clave).forEach(m => {
+                            const esRecup = m.es_recuperable === true || m.es_recuperable === 'Sí';
+                            if (esRecup) recupClave = Math.max(0, recupClave - Number(m.cantidad || 0));
+                            else scrapClave = Math.max(0, scrapClave - Number(m.cantidad || 0));
+                        });
+
+                        const totalClave = recupClave + scrapClave;
+
+                        const tr = document.createElement('tr');
+                        tr.className = "border-b hover:bg-gray-50";
+                        tr.innerHTML = `
+                            <td class="px-3 py-2 font-mono font-bold text-capex-dark">${clave}</td>
+                            <td class="px-3 py-2 text-xs text-gray-600">${itemRef.descripcion || 'N/A'}</td>
+                            <td class="px-3 py-2 text-center font-bold text-amber-600">${recupClave} pzas</td>
+                            <td class="px-3 py-2 text-center font-bold text-gray-500">${scrapClave} pzas</td>
+                            <td class="px-3 py-2 text-right font-bold text-emerald-700">${totalClave} pzas</td>
+                        `;
+                        tablaModelosHojas.appendChild(tr);
+                    });
+                }
+
+                actualizarGraficoSalidas(salidas, 'graficoConceptoSalidas', 'Hoja');
+
+            } else {
+                let totalRecup = 0;
                 ingresos.forEach(m => {
                     const esRecup = m.es_recuperable === true || m.es_recuperable === 'Sí';
-                    if (esRecup) totalRecupPuertas += Number(m.cantidad || 0);
+                    if (esRecup) totalRecup += Number(m.cantidad || 0);
                 });
                 salidas.forEach(m => {
                     const esRecup = m.es_recuperable === true || m.es_recuperable === 'Sí';
-                    if (esRecup) totalRecupPuertas -= Number(m.cantidad || 0);
+                    if (esRecup) totalRecup -= Number(m.cantidad || 0);
                 });
-                totalRecupPuertas = Math.max(0, totalRecupPuertas);
-                document.getElementById('kpi-puertas-recuperables').innerText = `${totalRecupPuertas.toLocaleString()} Pzas`;
+                totalRecup = Math.max(0, totalRecup);
 
-                renderizarTablaAgrupada(dataset, 'modelo', 'tabla-dashboard-puertas-modelo', ingresos, salidas);
-                renderizarTablaAgrupada(dataset, 'medida', 'tabla-dashboard-puertas-medida', ingresos, salidas);
-                renderizarTablaClaves(dataset, 'tabla-dashboard-puertas-clave', ingresos, salidas);
-                renderizarGraficoSalidas(salidas, 'graficoPuertasSalidas', 'puertas');
+                document.getElementById('kpi-puertas-recuperables').innerText = `${totalRecup.toLocaleString()} Pzas`;
+
+                const modelosSet = new Set(dataset.map(m => m.modelo).filter(Boolean));
+                const tablaModelo = document.getElementById('tabla-dashboard-puertas-modelo');
+                tablaModelo.innerHTML = '';
+                if (modelosSet.size === 0) {
+                    tablaModelo.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-gray-400">Sin modelos</td></tr>`;
+                } else {
+                    modelosSet.forEach(mod => {
+                        const ing = ingresos.filter(m => m.modelo === mod).reduce((s, m) => s + Number(m.cantidad || 0), 0);
+                        const sal = salidas.filter(m => m.modelo === mod).reduce((s, m) => s + Number(m.cantidad || 0), 0);
+                        tablaModelo.innerHTML += `<tr class="border-b"><td class="px-3 py-2 font-semibold">${mod}</td><td class="px-3 py-2 text-center text-emerald-600">+${ing}</td><td class="px-3 py-2 text-center text-red-600">-${sal}</td><td class="px-3 py-2 text-right font-bold">${ing - sal}</td></tr>`;
+                    });
+                }
+
+                const medidasSet = new Set(dataset.map(m => m.medida).filter(Boolean));
+                const tablaMedida = document.getElementById('tabla-dashboard-puertas-medida');
+                tablaMedida.innerHTML = '';
+                if (medidasSet.size === 0) {
+                    tablaMedida.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-gray-400">Sin medidas</td></tr>`;
+                } else {
+                    medidasSet.forEach(med => {
+                        const ing = ingresos.filter(m => m.medida === med).reduce((s, m) => s + Number(m.cantidad || 0), 0);
+                        const sal = salidas.filter(m => m.medida === med).reduce((s, m) => s + Number(m.cantidad || 0), 0);
+                        tablaMedida.innerHTML += `<tr class="border-b"><td class="px-3 py-2 font-semibold">${med}</td><td class="px-3 py-2 text-center text-emerald-600">+${ing}</td><td class="px-3 py-2 text-center text-red-600">-${sal}</td><td class="px-3 py-2 text-right font-bold">${ing - sal}</td></tr>`;
+                    });
+                }
+
+                const clavesSet = new Set(dataset.map(m => m.clave).filter(Boolean));
+                const tablaClave = document.getElementById('tabla-dashboard-puertas-clave');
+                tablaClave.innerHTML = '';
+                if (clavesSet.size === 0) {
+                    tablaClave.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-gray-400">Sin claves</td></tr>`;
+                } else {
+                    clavesSet.forEach(clav => {
+                        const ing = ingresos.filter(m => m.clave === clav).reduce((s, m) => s + Number(m.cantidad || 0), 0);
+                        const sal = salidas.filter(m => m.clave === clav).reduce((s, m) => s + Number(m.cantidad || 0), 0);
+                        tablaClave.innerHTML += `<tr class="border-b"><td class="px-3 py-2 font-mono font-bold">${clav}</td><td class="px-3 py-2 text-center text-emerald-600">+${ing}</td><td class="px-3 py-2 text-center text-red-600">-${sal}</td><td class="px-3 py-2 text-right font-bold">${ing - sal}</td></tr>`;
+                    });
+                }
+
+                actualizarGraficoSalidas(salidas, 'graficoPuertasSalidas', 'Puerta');
             }
-        }
-
-        function renderizarTablaClaves(dataset, elementId, ingresos, salidas) {
-            const tabla = document.getElementById(elementId);
-            if (!tabla) return;
-            tabla.innerHTML = '';
-
-            const clavesSet = [...new Set(dataset.map(m => m.clave).filter(Boolean))];
-            if (clavesSet.length === 0) {
-                tabla.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-gray-400">Sin datos registrados</td></tr>`;
-                return;
-            }
-
-            clavesSet.forEach(clave => {
-                const ing = ingresos.filter(m => m.clave === clave).reduce((s, m) => s + Number(m.cantidad || 0), 0);
-                const sal = salidas.filter(m => m.clave === clave).reduce((s, m) => s + Number(m.cantidad || 0), 0);
-                const stock = ing - sal;
-
-                const tr = document.createElement('tr');
-                tr.className = "border-b hover:bg-gray-50 cursor-pointer";
-                tr.onclick = () => verMovimientosClave(clave);
-                tr.innerHTML = `
-                    <td class="px-3 py-2 font-mono font-bold text-capex">${clave}</td>
-                    <td class="px-3 py-2 text-center text-emerald-600 font-medium">+${ing}</td>
-                    <td class="px-3 py-2 text-center text-red-600 font-medium">-${sal}</td>
-                    <td class="px-3 py-2 text-right font-bold ${stock > 0 ? 'text-gray-800' : 'text-red-500'}">${stock} pzas</td>
-                `;
-                tabla.appendChild(tr);
-            });
-        }
-
-        function renderizarTablaAgrupada(dataset, campo, elementId, ingresos, salidas) {
-            const tabla = document.getElementById(elementId);
-            if (!tabla) return;
-            tabla.innerHTML = '';
-
-            const valoresSet = [...new Set(dataset.map(m => m[campo]).filter(Boolean))];
-            if (valoresSet.length === 0) {
-                tabla.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-gray-400">Sin datos</td></tr>`;
-                return;
-            }
-
-            valoresSet.forEach(val => {
-                const ing = ingresos.filter(m => m[campo] === val).reduce((s, m) => s + Number(m.cantidad || 0), 0);
-                const sal = salidas.filter(m => m[campo] === val).reduce((s, m) => s + Number(m.cantidad || 0), 0);
-                const stock = ing - sal;
-
-                const tr = document.createElement('tr');
-                tr.className = "border-b hover:bg-gray-50";
-                tr.innerHTML = `
-                    <td class="px-3 py-2 font-bold text-gray-700">${val}</td>
-                    <td class="px-3 py-2 text-center text-emerald-600">+${ing}</td>
-                    <td class="px-3 py-2 text-center text-red-600">-${sal}</td>
-                    <td class="px-3 py-2 text-right font-bold ${stock > 0 ? 'text-gray-900' : 'text-red-500'}">${stock}</td>
-                `;
-                tabla.appendChild(tr);
-            });
         }
 
         function toggleDetalleMedida(medida) {
-            const id = `detalle-medida-${medida.replace(/\s+/g, '-')}`;
-            const elem = document.getElementById(id);
+            const idKey = `detalle-medida-${medida.replace(/\s+/g, '-')}`;
+            const elem = document.getElementById(idKey);
+            const icon = document.getElementById(`icon-medida-${medida.replace(/\s+/g, '-')}`);
             if (elem) {
                 elem.classList.toggle('hidden');
+                if (icon) {
+                    icon.classList.toggle('rotate-90');
+                }
             }
         }
 
-        function verMovimientosClave(clave) {
-            cambiarPestana('historial');
-            document.getElementById('filtro-clave').value = clave;
-            renderizarHistorial();
-        }
-
-        function renderizarGraficoSalidas(salidasDataset, canvasId, tipoCat) {
-            const ctx = document.getElementById(canvasId);
-            if (!ctx) return;
-
+        function actualizarGraficoSalidas(salidasDataset, canvasId, categoriaFiltro) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
             const conteoConceptos = {};
+
             salidasDataset.forEach(m => {
-                const conc = m.concepto || m.motivo || 'General';
-                conteoConceptos[conc] = (conteoConceptos[conc] || 0) + Number(m.cantidad || 0);
+                const concepto = m.concepto || m.motivo || 'Sin especificar';
+                conteoConceptos[concepto] = (conteoConceptos[concepto] || 0) + Number(m.cantidad || 0);
             });
 
             const labels = Object.keys(conteoConceptos);
             const dataValues = Object.values(conteoConceptos);
 
-            if (tipoCat === 'hojas' && chartSalidasHojasInstance) {
-                chartSalidasHojasInstance.destroy();
-            } else if (tipoCat === 'puertas' && chartSalidasPuertasInstance) {
-                chartSalidasPuertasInstance.destroy();
+            if (canvasId === 'graficoConceptoSalidas') {
+                if (chartSalidasHojasInstance) chartSalidasHojasInstance.destroy();
+            } else {
+                if (chartSalidasPuertasInstance) chartSalidasPuertasInstance.destroy();
             }
 
-            const chartInstance = new Chart(ctx, {
+            const chartConfig = {
                 type: 'doughnut',
                 data: {
-                    labels: labels.length > 0 ? labels : ['Sin Salidas'],
+                    labels: labels.length > 0 ? labels : ['Sin Salidas Registradas'],
                     datasets: [{
                         data: dataValues.length > 0 ? dataValues : [1],
-                        backgroundColor: ['#3B4B44', '#E056fd', '#f0932b', '#eb4d4b', '#686de0', '#009432', '#1e90ff']
+                        backgroundColor: ['#3B4B44', '#E05638', '#D97706', '#2563EB', '#7C3AED', '#DB2777', '#4B5563'],
+                        borderWidth: 1
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 } } }
+                        legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } }
                     },
-                    onClick: (e, activeElements) => {
-                        if (activeElements.length > 0) {
-                            const index = activeElements[0].index;
+                    onClick: (event, elements) => {
+                        if (elements.length > 0) {
+                            const index = elements[0].index;
                             const conceptoSeleccionado = labels[index];
-                            if (conceptoSeleccionado && conceptoSeleccionado !== 'Sin Salidas') {
-                                cambiarPestana('historial');
-                                document.getElementById('filtro-tipo').value = 'SALIDA';
-                                document.getElementById('filtro-concepto').value = conceptoSeleccionado;
-                                renderizarHistorial();
-                            }
+                            cambiarPestana('historial');
+                            document.getElementById('filtro-categoria').value = categoriaFiltro;
+                            document.getElementById('filtro-tipo').value = 'SALIDA';
+                            document.getElementById('filtro-concepto').value = conceptoSeleccionado;
+                            renderizarHistorial();
                         }
                     }
                 }
-            });
+            };
 
-            if (tipoCat === 'hojas') chartSalidasHojasInstance = chartInstance;
-            else chartSalidasPuertasInstance = chartInstance;
+            if (canvasId === 'graficoConceptoSalidas') {
+                chartSalidasHojasInstance = new Chart(ctx, chartConfig);
+            } else {
+                chartSalidasPuertasInstance = new Chart(ctx, chartConfig);
+            }
         }
 
         function renderizarHistorial() {
-            const cat = document.getElementById('filtro-categoria').value;
-            const tipo = document.getElementById('filtro-tipo').value;
-            const recup = document.getElementById('filtro-recuperable').value;
-            const concepto = document.getElementById('filtro-concepto').value;
-            const fechaDesde = document.getElementById('filtro-fecha-desde').value;
-            const fechaHasta = document.getElementById('filtro-fecha-hasta').value;
-            const claveBuscada = document.getElementById('filtro-clave').value.trim().toUpperCase();
+            const filtroCat = document.getElementById('filtro-categoria').value;
+            const filtroTipo = document.getElementById('filtro-tipo').value;
+            const filtroRecup = document.getElementById('filtro-recuperable').value;
+            const filtroConcepto = document.getElementById('filtro-concepto').value;
+            const filtroFechaDesde = document.getElementById('filtro-fecha-desde').value;
+            const filtroFechaHasta = document.getElementById('filtro-fecha-hasta').value;
+            const filtroClave = document.getElementById('filtro-clave').value.toUpperCase().trim();
 
             let filtrados = movimientos.filter(m => {
-                if (cat && m.categoria !== cat) return false;
-                if (tipo && m.tipo !== tipo) return false;
+                if (filtroCat && m.categoria !== filtroCat) return false;
+                if (filtroTipo && m.tipo !== filtroTipo) return false;
                 
-                if (recup) {
-                    const esRecupVal = (m.es_recuperable === true || m.es_recuperable === 'Sí') ? 'Sí' : 'No';
-                    if (esRecupVal !== recup) return false;
+                if (filtroRecup) {
+                    const esRecupStr = (m.es_recuperable === true || m.es_recuperable === 'Sí') ? 'Sí' : 'No';
+                    if (esRecupStr !== filtroRecup) return false;
                 }
 
-                if (concepto) {
-                    const concVal = m.concepto || m.motivo || '';
-                    if (concVal !== concepto) return false;
+                if (filtroConcepto) {
+                    const conceptoItem = m.concepto || m.motivo || '';
+                    if (conceptoItem !== filtroConcepto) return false;
                 }
 
-                if (fechaDesde && m.fecha < fechaDesde) return false;
-                if (fechaHasta && m.fecha > fechaHasta) return false;
+                if (filtroFechaDesde && m.fecha < filtroFechaDesde) return false;
+                if (filtroFechaHasta && m.fecha > filtroFechaHasta) return false;
 
-                if (claveBuscada && !String(m.clave).toUpperCase().includes(claveBuscada)) return false;
+                if (filtroClave && !m.clave.toUpperCase().includes(filtroClave)) return false;
 
                 return true;
             });
@@ -1800,55 +1858,54 @@
             const tbody = document.getElementById('tabla-historial-body');
             tbody.innerHTML = '';
 
-            let totalPiezasBalance = 0;
+            let balanceTotalFiltrado = 0;
 
             if (filtrados.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="10" class="text-center py-6 text-gray-400">No se encontraron movimientos registrados con esos filtros</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="10" class="text-center py-6 text-gray-400">No se encontraron movimientos registrados con los filtros seleccionados.</td></tr>`;
             } else {
                 filtrados.forEach(m => {
                     const esIngreso = m.tipo === 'INGRESO';
+                    const cat = m.categoria || 'Hoja';
                     const cant = Number(m.cantidad || 0);
-                    if (esIngreso) totalPiezasBalance += cant;
-                    else totalPiezasBalance -= cant;
 
-                    const tr = document.createElement('tr');
-                    tr.className = "border-b hover:bg-gray-50 text-xs";
+                    if (esIngreso) balanceTotalFiltrado += cant;
+                    else balanceTotalFiltrado -= cant;
 
                     const badgeTipo = esIngreso 
-                        ? `<span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 font-bold rounded">INGRESO</span>`
-                        : `<span class="px-2 py-0.5 bg-red-100 text-red-800 font-bold rounded">SALIDA</span>`;
+                        ? `<span class="bg-emerald-100 text-emerald-800 text-xs px-2 py-0.5 rounded font-bold">INGRESO</span>` 
+                        : `<span class="bg-red-100 text-red-800 text-xs px-2 py-0.5 rounded font-bold">SALIDA</span>`;
 
-                    const badgeCat = `<span class="font-semibold text-gray-700">${m.categoria || 'Hoja'}</span>`;
-                    const recupTexto = (m.es_recuperable === true || m.es_recuperable === 'Sí') ? 'Sí' : 'No';
-                    
-                    let detalleExtra = '';
-                    if (esIngreso) {
-                        detalleExtra = `<span class="text-gray-600">Recup: <b>${recupTexto}</b></span>`;
-                    } else {
-                        const tipoSalidaBadge = `<span class="text-purple-700 font-bold">[${m.tipo_salida || 'Salida Manual'}]</span>`;
-                        detalleExtra = `${tipoSalidaBadge} <span class="text-red-700 font-semibold">${m.concepto || m.motivo || ''}</span>`;
-                    }
+                    const recupStr = (m.es_recuperable === true || m.es_recuperable === 'Sí') ? 'Sí' : 'No';
+                    const badgeRecup = recupStr === 'Sí' 
+                        ? `<span class="text-xs bg-amber-50 text-amber-800 font-semibold px-1.5 py-0.5 rounded">Recup: Sí</span>` 
+                        : `<span class="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">Scrap</span>`;
 
+                    const conceptoDetalle = esIngreso 
+                        ? `<span class="text-xs text-gray-600">Ajuste: ${m.medida_ajustar || 'N/A'}</span>` 
+                        : `<span class="text-xs font-semibold text-red-700">${m.concepto || m.motivo || 'Salida'}</span>`;
+
+                    const tr = document.createElement('tr');
+                    tr.className = "border-b hover:bg-gray-50";
                     tr.innerHTML = `
-                        <td class="px-3 py-2">${badgeCat}</td>
-                        <td class="px-3 py-2">${badgeTipo}</td>
-                        <td class="px-3 py-2">${formatearFechaCorta(m.fecha)}</td>
-                        <td class="px-3 py-2 font-mono font-bold text-capex">${m.folio_sae || ''}</td>
-                        <td class="px-3 py-2 font-mono font-bold">${m.clave}</td>
-                        <td class="px-3 py-2">${m.medida || ''}</td>
-                        <td class="px-3 py-2">${detalleExtra}</td>
-                        <td class="px-3 py-2 text-gray-600 truncate max-w-xs" title="${m.descripcion || ''}">${m.descripcion || ''}</td>
-                        <td class="px-3 py-2 text-center font-bold text-sm ${esIngreso ? 'text-emerald-700' : 'text-red-600'}">${esIngreso ? '+' : '-'}${cant}</td>
-                        <td class="px-3 py-2 text-center space-x-2">
-                            <button onclick="abrirModalEditar('${m.id}')" title="Editar Registro" class="text-blue-600 hover:text-blue-800"><i class="fa-solid fa-pen"></i></button>
-                            <button onclick="eliminarRegistro('${m.id}')" title="Eliminar Registro" class="text-red-600 hover:text-red-800"><i class="fa-solid fa-trash"></i></button>
+                        <td class="px-3 py-3 font-semibold text-xs">${cat}</td>
+                        <td class="px-3 py-3">${badgeTipo}</td>
+                        <td class="px-3 py-3 text-xs">${formatearFechaCorta(m.fecha)}</td>
+                        <td class="px-3 py-3 font-mono font-bold text-xs text-gray-700">${m.folio_sae || 'S/F'}</td>
+                        <td class="px-3 py-3 font-mono font-bold text-capex-dark">${m.clave}</td>
+                        <td class="px-3 py-3 text-xs">${m.medida || 'N/A'}</td>
+                        <td class="px-3 py-3">${badgeRecup}<div class="mt-0.5">${conceptoDetalle}</div></td>
+                        <td class="px-3 py-3 text-xs text-gray-600">${m.descripcion || ''}</td>
+                        <td class="px-3 py-3 text-center font-bold ${esIngreso ? 'text-emerald-700' : 'text-red-600'}">${esIngreso ? '+' : '-'}${cant} pzas</td>
+                        <td class="px-3 py-3 text-center space-x-1">
+                            <button onclick="abrirModalEditar('${m.id}')" title="Editar" class="text-blue-600 hover:text-blue-800 p-1"><i class="fa-solid fa-pen-to-square"></i></button>
+                            <button onclick="eliminarRegistro('${m.id}')" title="Eliminar" class="text-red-500 hover:text-red-700 p-1"><i class="fa-solid fa-trash"></i></button>
                         </td>
                     `;
                     tbody.appendChild(tr);
                 });
             }
 
-            document.getElementById('total-piezas-filtradas').innerText = `${totalPiezasBalance.toLocaleString()} Pzas`;
+            document.getElementById('total-piezas-filtradas').innerText = `${balanceTotalFiltrado.toLocaleString()} Pzas`;
             document.getElementById('contador-resultados').innerText = `Mostrando ${filtrados.length} de ${movimientos.length} registros totales`;
         }
 
@@ -1864,32 +1921,36 @@
         }
 
         function imprimirReporteGeneral() {
-            const datasetReporte = ultimosFiltrados.length > 0 ? ultimosFiltrados : movimientos;
-            
+            const tbodyReporte = document.getElementById('tabla-reporte-body');
+            tbodyReporte.innerHTML = '';
+
+            const dataset = ultimosFiltrados.length > 0 ? ultimosFiltrados : movimientos;
+
+            if (dataset.length === 0) {
+                alert("No hay registros para imprimir en el reporte.");
+                return;
+            }
+
             document.getElementById('reporte-fecha-impresion').innerText = new Date().toLocaleDateString();
-            document.getElementById('reporte-total-registros').innerText = datasetReporte.length;
+            document.getElementById('reporte-total-registros').innerText = dataset.length;
 
-            const tbody = document.getElementById('tabla-reporte-body');
-            tbody.innerHTML = '';
-
-            datasetReporte.forEach(m => {
-                const esIng = m.tipo === 'INGRESO';
-                const recupTxt = (m.es_recuperable === true || m.es_recuperable === 'Sí') ? 'Sí' : 'No';
-                const detalleTxt = esIng ? `Recup: ${recupTxt}` : `[${m.tipo_salida || 'Salida Manual'}] ${m.concepto || m.motivo || ''}`;
-
+            dataset.forEach(m => {
+                const esIngreso = m.tipo === 'INGRESO';
+                const detalleExtra = esIngreso ? `Recup: ${m.es_recuperable ? 'Sí' : 'No'} (${m.medida_ajustar || 'N/A'})` : `${m.concepto || m.motivo || 'Salida'}`;
+                
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td class="border border-gray-300 px-2 py-1">${m.categoria || 'Hoja'}</td>
-                    <td class="border border-gray-300 px-2 py-1 font-bold ${esIng ? 'text-emerald-700' : 'text-red-600'}">${m.tipo}</td>
+                    <td class="border border-gray-300 px-2 py-1 font-semibold">${m.categoria || 'Hoja'}</td>
+                    <td class="border border-gray-300 px-2 py-1 font-bold ${esIngreso ? 'text-emerald-700' : 'text-red-600'}">${m.tipo}</td>
                     <td class="border border-gray-300 px-2 py-1">${formatearFechaCorta(m.fecha)}</td>
-                    <td class="border border-gray-300 px-2 py-1 font-mono">${m.folio_sae || ''}</td>
+                    <td class="border border-gray-300 px-2 py-1 font-mono font-bold">${m.folio_sae || 'S/F'}</td>
                     <td class="border border-gray-300 px-2 py-1 font-mono font-bold">${m.clave}</td>
                     <td class="border border-gray-300 px-2 py-1">${m.medida || ''}</td>
-                    <td class="border border-gray-300 px-2 py-1">${detalleTxt}</td>
+                    <td class="border border-gray-300 px-2 py-1">${detalleExtra}</td>
                     <td class="border border-gray-300 px-2 py-1 text-gray-700">${m.descripcion || ''}</td>
-                    <td class="border border-gray-300 px-2 py-1 text-center font-bold">${esIng ? '+' : '-'}${m.cantidad}</td>
+                    <td class="border border-gray-300 px-2 py-1 text-center font-bold">${esIngreso ? '+' : '-'}${m.cantidad}</td>
                 `;
-                tbody.appendChild(tr);
+                tbodyReporte.appendChild(tr);
             });
 
             const reporteSection = document.getElementById('seccion-reporte-impresion');
