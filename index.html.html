@@ -96,11 +96,7 @@
                 <span class="text-sm bg-capex-soft text-capex-dark font-semibold px-3 py-1 rounded-full border border-capex/20">CAPEX Puertas de Madera</span>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div class="bg-white p-5 rounded-lg shadow border-l-4 border-capex">
-                    <div class="text-gray-500 text-sm font-semibold">Total Ingresado (Hojas)</div>
-                    <div class="text-2xl font-bold text-gray-800 mt-1" id="kpi-hojas-ingresado">0 Pzas</div>
-                </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div class="bg-white p-5 rounded-lg shadow border-l-4 border-red-500">
                     <div class="text-gray-500 text-sm font-semibold">Total Salidas (Hojas)</div>
                     <div class="text-2xl font-bold text-red-600 mt-1" id="kpi-hojas-salidas">0 Pzas</div>
@@ -1555,7 +1551,9 @@
             const totalSalidas = salidas.reduce((s, m) => s + Number(m.cantidad || 0), 0);
             const stockActual = totalIngresado - totalSalidas;
 
-            document.getElementById(`kpi-${tipo}-ingresado`).innerText = `${totalIngresado.toLocaleString()} Pzas`;
+            if (tipo === 'puertas') {
+                document.getElementById(`kpi-${tipo}-ingresado`).innerText = `${totalIngresado.toLocaleString()} Pzas`;
+            }
             document.getElementById(`kpi-${tipo}-salidas`).innerText = `${totalSalidas.toLocaleString()} Pzas`;
             document.getElementById(`kpi-${tipo}-stock`).innerText = `${stockActual.toLocaleString()} Pzas`;
 
@@ -1966,3 +1964,4 @@
     </script>
 </body>
 </html>
+```[cite: 1]
