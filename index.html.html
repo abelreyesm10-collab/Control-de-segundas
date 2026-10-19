@@ -135,7 +135,7 @@
                 <div class="bg-white p-5 rounded-lg shadow border-t-2 border-capex">
                     <h2 class="text-lg font-bold text-capex-dark mb-4 flex justify-between items-center">
                         <span><i class="fa-solid fa-barcode text-capex mr-2"></i>Stock por Clave (Almacén 4)</span>
-                        <span class="text-xs bg-capex-soft text-capex px-2 py-1 rounded">Haz clic para ver movimientos</span>
+                        <span class="text-xs bg-capex-soft text-capex px-2 py-1 rounded">Haz clic en la clave para ver su historial</span>
                     </h2>
                     <div class="overflow-y-auto max-h-72">
                         <table class="w-full text-sm text-left text-gray-500">
@@ -157,6 +157,7 @@
             <div class="bg-white p-5 rounded-lg shadow border-t-2 border-capex">
                 <h2 class="text-lg font-bold text-capex-dark mb-4 flex justify-between items-center">
                     <span><i class="fa-solid fa-boxes-stacked text-capex mr-2"></i>Desglosado de Hojas por Clave (Recuperables vs Scrap)</span>
+                    <span class="text-xs bg-capex-soft text-capex px-2 py-1 rounded">Haz clic en la clave para ver su historial</span>
                 </h2>
                 <div class="overflow-y-auto max-h-72">
                     <table class="w-full text-sm text-left text-gray-500">
@@ -260,7 +261,7 @@
                 <div class="bg-white p-5 rounded-lg shadow border-t-2 border-amber-600">
                     <h2 class="text-lg font-bold text-capex-dark mb-4 flex justify-between items-center">
                         <span><i class="fa-solid fa-barcode text-amber-600 mr-2"></i>Stock por Clave</span>
-                        <span class="text-xs bg-amber-50 text-amber-800 px-2 py-1 rounded font-semibold">Almacén 4</span>
+                        <span class="text-xs bg-amber-50 text-amber-800 px-2 py-1 rounded font-semibold">Haz clic para ver historial</span>
                     </h2>
                     <div class="overflow-y-auto max-h-72">
                         <table class="w-full text-sm text-left text-gray-500">
@@ -1033,6 +1034,17 @@
             await cargarMovimientos();
         });
 
+        // NUEVA FUNCIÓN PARA NAVEGAR AL HISTORIAL FILTRADO POR CLAVE
+        function irAHistorialConClave(clave, categoria = '') {
+            cambiarPestana('historial');
+            limpiarFiltrosHistorial();
+            if (categoria) {
+                document.getElementById('filtro-categoria').value = categoria;
+            }
+            document.getElementById('filtro-clave').value = clave;
+            renderizarHistorial();
+        }
+
         async function cargarMovimientos() {
             try {
                 const { data, error } = await supabaseClient
@@ -1610,7 +1622,7 @@
                         const clavesMedida = [...new Set(hojasMedida.map(m => m.clave))];
 
                         let htmlDetalle = `<td colspan="4" class="px-4 py-2 text-xs">
-                            <div class="font-semibold text-capex mb-1"><i class="fa-solid fa-info-circle mr-1"></i> Desglose de Claves para Medida: ${medida}</div>
+                            <div class="font-semibold text-capex mb-1"><i class="fa-solid fa-info-circle mr-1"></i> Desglose de Claves para Medida: ${medida} (Haz clic en la clave para ver su historial)</div>
                             <table class="w-full bg-white border rounded">
                                 <tr class="bg-gray-100 font-bold"><th class="p-1">Clave</th><th class="p-1">Descripción</th><th class="p-1 text-center">Ing.</th><th class="p-1 text-center">Sal.</th><th class="p-1 text-right">Stock</th></tr>`;
 
@@ -1618,8 +1630,8 @@
                             const ingClave = ingresos.filter(m => m.medida === medida && m.clave === clave).reduce((s, m) => s + Number(m.cantidad || 0), 0);
                             const salClave = salidas.filter(m => m.medida === medida && m.clave === clave).reduce((s, m) => s + Number(m.cantidad || 0), 0);
                             const itemRef = hojasMedida.find(m => m.clave === clave) || {};
-                            htmlDetalle += `<tr>
-                                <td class="p-1 font-mono font-bold">${clave}</td>
+                            htmlDetalle += `<tr class="hover:bg-blue-50 cursor-pointer transition" onclick="event.stopPropagation(); irAHistorialConClave('${clave}', 'Hoja')">
+                                <td class="p-1 font-mono font-bold text-blue-600 underline">${clave}</td>
                                 <td class="p-1">${itemRef.descripcion || ''}</td>
                                 <td class="p-1 text-center text-emerald-600">${ingClave}</td>
                                 <td class="p-1 text-center text-red-600">${salClave}</td>
@@ -1646,9 +1658,10 @@
                         const itemRef = dataset.find(m => m.clave === clave) || {};
 
                         const tr = document.createElement('tr');
-                        tr.className = "border-b hover:bg-gray-50";
+                        tr.className = "border-b hover:bg-blue-50 cursor-pointer transition";
+                        tr.onclick = () => irAHistorialConClave(clave, 'Hoja');
                         tr.innerHTML = `
-                            <td class="px-3 py-2 font-mono font-bold text-capex-dark">${clave} <span class="block text-xs font-normal text-gray-500">${itemRef.descripcion || ''}</span></td>
+                            <td class="px-3 py-2 font-mono font-bold text-blue-600 underline">${clave} <span class="block text-xs font-normal text-gray-500">${itemRef.descripcion || ''}</span></td>
                             <td class="px-3 py-2 text-center text-emerald-600 font-medium">+${ing}</td>
                             <td class="px-3 py-2 text-center text-red-600 font-medium">-${sal}</td>
                             <td class="px-3 py-2 text-right font-bold ${stockClave > 0 ? 'text-gray-900' : 'text-red-500'}">${stockClave} pzas</td>
@@ -1683,9 +1696,10 @@
                         const totalClave = recupClave + scrapClave;
 
                         const tr = document.createElement('tr');
-                        tr.className = "border-b hover:bg-gray-50";
+                        tr.className = "border-b hover:bg-blue-50 cursor-pointer transition";
+                        tr.onclick = () => irAHistorialConClave(clave, 'Hoja');
                         tr.innerHTML = `
-                            <td class="px-3 py-2 font-mono font-bold text-capex-dark">${clave}</td>
+                            <td class="px-3 py-2 font-mono font-bold text-blue-600 underline">${clave}</td>
                             <td class="px-3 py-2 text-xs text-gray-600">${itemRef.descripcion || 'N/A'}</td>
                             <td class="px-3 py-2 text-center font-bold text-amber-600">${recupClave} pzas</td>
                             <td class="px-3 py-2 text-center font-bold text-gray-500">${scrapClave} pzas</td>
@@ -1746,7 +1760,14 @@
                     clavesSet.forEach(clav => {
                         const ing = ingresos.filter(m => m.clave === clav).reduce((s, m) => s + Number(m.cantidad || 0), 0);
                         const sal = salidas.filter(m => m.clave === clav).reduce((s, m) => s + Number(m.cantidad || 0), 0);
-                        tablaClave.innerHTML += `<tr class="border-b"><td class="px-3 py-2 font-mono font-bold">${clav}</td><td class="px-3 py-2 text-center text-emerald-600">+${ing}</td><td class="px-3 py-2 text-center text-red-600">-${sal}</td><td class="px-3 py-2 text-right font-bold">${ing - sal}</td></tr>`;
+                        tablaClave.innerHTML += `
+                            <tr class="border-b hover:bg-amber-50 cursor-pointer transition" onclick="irAHistorialConClave('${clav}', 'Puerta')">
+                                <td class="px-3 py-2 font-mono font-bold text-amber-700 underline">${clav}</td>
+                                <td class="px-3 py-2 text-center text-emerald-600">+${ing}</td>
+                                <td class="px-3 py-2 text-center text-red-600">-${sal}</td>
+                                <td class="px-3 py-2 text-right font-bold">${ing - sal}</td>
+                            </tr>
+                        `;
                     });
                 }
 
@@ -1964,4 +1985,3 @@
     </script>
 </body>
 </html>
-```[cite: 1]
