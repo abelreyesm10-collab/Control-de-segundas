@@ -351,6 +351,12 @@
                         </div>
                     </div>
 
+                    <!-- CAMPO AGREGADO: COMENTARIOS / OBSERVACIONES DE INGRESO -->
+                    <div class="md:col-span-3">
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Comentarios / Observaciones de Ingreso</label>
+                        <textarea id="ingreso_comentarios" rows="3" placeholder="Detalles, tipo de defecto o notas adicionales sobre el ingreso del material..." class="w-full border rounded-md p-2 focus:ring-2 focus:ring-capex"></textarea>
+                    </div>
+
                     <div class="pt-4 flex justify-end space-x-3">
                         <button type="button" onclick="limpiarFormularioIngreso()" class="px-4 py-2 border rounded-md text-gray-600 hover:bg-gray-100">Limpiar</button>
                         <button type="submit" class="px-6 py-2 bg-capex text-white rounded-md hover:bg-capex-dark font-semibold shadow">
@@ -637,8 +643,8 @@
                             <option value="Traspaso Almacen 3 a Almacen 4">Traspaso (Alm. 3 a Alm. 4)</option>
                         </select>
                     </div>
-                    <div id="edit-campo-observaciones" class="hidden md:col-span-2">
-                        <label class="block text-xs font-semibold text-gray-700 mb-1">Observaciones</label>
+                    <div id="edit-campo-observaciones" class="md:col-span-2">
+                        <label class="block text-xs font-semibold text-gray-700 mb-1">Observaciones / Comentarios</label>
                         <textarea id="edit-observaciones" rows="2" class="w-full border rounded-md p-2 text-xs focus:ring-2 focus:ring-blue-500"></textarea>
                     </div>
                 </div>
@@ -937,6 +943,8 @@
         function limpiarFormularioIngreso() {
             document.getElementById('form-ingreso').reset();
             document.getElementById('fecha').valueAsDate = new Date();
+            const comentariosElem = document.getElementById('ingreso_comentarios');
+            if (comentariosElem) comentariosElem.value = '';
             actualizarOpcionesClaves('ingreso');
             generarFoliosConsecutivos();
         }
@@ -1127,6 +1135,7 @@
             const fecha = document.getElementById('fecha').value;
             const folio = document.getElementById('folio_sae').value;
             const autorizado = document.getElementById('autorizado_por').value;
+            const comentarios = document.getElementById('ingreso_comentarios')?.value.trim() || 'Sin comentarios.';
 
             const catalogo = obtenerCatalogo(categoria);
             const filasPartidas = document.querySelectorAll('.fila-partida-ingreso');
@@ -1161,6 +1170,7 @@
                         cantidad: cantidad,
                         es_recuperable: esRecuperable,
                         medida_ajustar: medidaAjustar,
+                        observaciones: comentarios,
                         autorizado_por: autorizado
                     });
 
@@ -1175,6 +1185,7 @@
                         medida: medida,
                         es_recuperable: esRecuperable ? 'Sí' : 'No',
                         medida_ajustar: medidaAjustar,
+                        comentarios: comentarios,
                         cantidad: cantidad,
                         autorizado_por: autorizado
                     });
@@ -1195,7 +1206,8 @@
                         movimientos.unshift({
                             ...dbItem,
                             modelo: original.modelo,
-                            medida_ajustar: original.medida_ajustar
+                            medida_ajustar: original.medida_ajustar,
+                            comentarios: original.comentarios
                         });
                     });
                 }
@@ -1349,10 +1361,10 @@
             document.getElementById('edit-campo-medida-ajustar').classList.toggle('hidden', !esIngreso);
             document.getElementById('edit-campo-tipo-salida').classList.toggle('hidden', esIngreso);
             document.getElementById('edit-campo-concepto').classList.toggle('hidden', esIngreso);
-            document.getElementById('edit-campo-observaciones').classList.toggle('hidden', esIngreso);
 
             const recup = typeof item.es_recuperable === 'boolean' ? (item.es_recuperable ? 'Sí' : 'No') : (item.es_recuperable || 'No');
             document.getElementById('edit-es-recuperable').value = recup;
+            document.getElementById('edit-observaciones').value = item.comentarios || item.observaciones || '';
 
             if (esIngreso) {
                 document.getElementById('edit-medida-ajustar').value = item.medida_ajustar || '';
@@ -1360,7 +1372,6 @@
             } else {
                 document.getElementById('edit-tipo-salida').value = item.tipo_salida || 'Salida Manual';
                 document.getElementById('edit-concepto').value = item.concepto || item.motivo || 'Perdida';
-                document.getElementById('edit-observaciones').value = item.comentarios || item.observaciones || '';
             }
 
             document.getElementById('modal-editar').classList.remove('hidden');
@@ -1424,6 +1435,7 @@
                 cantidad: parseInt(document.getElementById('edit-cantidad').value),
                 descripcion: document.getElementById('edit-descripcion').value.trim(),
                 es_recuperable: esRecup === 'Sí',
+                observaciones: document.getElementById('edit-observaciones').value.trim(),
                 autorizado_por: document.getElementById('edit-autorizado').value.trim()
             };
 
@@ -1432,7 +1444,6 @@
             } else {
                 payload.tipo_salida = document.getElementById('edit-tipo-salida').value;
                 payload.motivo = document.getElementById('edit-concepto').value;
-                payload.observaciones = document.getElementById('edit-observaciones').value.trim();
             }
 
             try {
@@ -1510,6 +1521,7 @@
                 gridDetalles.innerHTML = `
                     <div><span class="font-bold text-gray-700">Categoría:</span> <span class="font-bold uppercase ml-2">${catNombre}</span></div>
                     <div class="col-span-2"><span class="font-bold text-gray-700">Nota:</span> <span class="ml-2 font-semibold">Orden de ingreso con múltiples partidas detalladas.</span></div>
+                    <div class="col-span-2 border-t pt-2 mt-1"><span class="font-bold text-gray-700">Comentarios / Observaciones:</span> <p class="mt-1 text-gray-800 bg-white p-2 border rounded">${primerItem.comentarios || primerItem.observaciones || 'Sin observaciones'}</p></div>
                 `;
             } else {
                 const tipoSalidaVal = primerItem.tipo_salida || 'Salida Manual';
