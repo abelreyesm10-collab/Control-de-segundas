@@ -1042,7 +1042,6 @@
             await cargarMovimientos();
         });
 
-        // NUEVA FUNCIÓN PARA NAVEGAR AL HISTORIAL FILTRADO POR CLAVE
         function irAHistorialConClave(clave, categoria = '') {
             cambiarPestana('historial');
             limpiarFiltrosHistorial();
@@ -1212,7 +1211,7 @@
                     });
                 }
 
-                imprimirOrdenGrupo(listaItemsImpresion);
+                imprimirOrdenGrupo(listaItemsImpresion, false);
                 limpiarFormularioIngreso();
             } catch (err) {
                 console.error("Error al guardar el ingreso múltiple:", err.message);
@@ -1306,12 +1305,50 @@
                     });
                 }
 
-                imprimirOrdenGrupo(listaItemsImpresion);
+                imprimirOrdenGrupo(listaItemsImpresion, false);
                 limpiarFormularioSalida();
             } catch (err) {
                 console.error("Error al guardar la salida múltiple:", err.message);
                 alert("Ocurrió un error al guardar en Supabase: " + err.message);
             }
+        }
+
+        function reimprimirOrden(id) {
+            const baseItem = movimientos.find(m => String(m.id) === String(id));
+            if (!baseItem) {
+                alert("No se encontró el movimiento para reimprimir.");
+                return;
+            }
+
+            const grupoMovimientos = baseItem.folio_sae && baseItem.folio_sae !== 'S/F'
+                ? movimientos.filter(m => m.folio_sae === baseItem.folio_sae && m.tipo === baseItem.tipo)
+                : [baseItem];
+
+            const ordenados = [...grupoMovimientos].sort((a, b) => {
+                if (a.created_at && b.created_at) {
+                    return new Date(a.created_at) - new Date(b.created_at);
+                }
+                return 0;
+            });
+
+            const itemsParaImprimir = ordenados.map(item => {
+                const categoria = item.categoria || 'Hoja';
+                const catalogo = obtenerCatalogo(categoria);
+                const itemCat = catalogo[item.clave] || {};
+
+                return {
+                    ...item,
+                    categoria,
+                    modelo: item.modelo || itemCat.modelo || 'N/A',
+                    es_recuperable: typeof item.es_recuperable === 'boolean'
+                        ? (item.es_recuperable ? 'Sí' : 'No')
+                        : (item.es_recuperable || 'No'),
+                    concepto: item.concepto || item.motivo || '',
+                    comentarios: item.comentarios || item.observaciones || 'Sin observaciones'
+                };
+            });
+
+            imprimirOrdenGrupo(itemsParaImprimir, true);
         }
 
         async function eliminarRegistro(id) {
@@ -1476,7 +1513,7 @@
             }
         }
 
-        function imprimirOrdenGrupo(items) {
+        function imprimirOrdenGrupo(items, volverAHistorial = false) {
             if (!items || items.length === 0) return;
 
             const primerItem = items[0];
@@ -1556,7 +1593,12 @@
 
             printSection.classList.remove('active-print');
             printSection.classList.add('hidden');
-            cambiarPestana(catNombre === 'Puerta' ? 'dashboard-puertas' : 'dashboard-hojas');
+
+            if (volverAHistorial) {
+                cambiarPestana('historial');
+            } else {
+                cambiarPestana(catNombre === 'Puerta' ? 'dashboard-puertas' : 'dashboard-hojas');
+            }
         }
 
         function actualizarDashboards() {
@@ -1928,6 +1970,7 @@
                         <td class="px-3 py-3 text-xs text-gray-600">${m.descripcion || ''}</td>
                         <td class="px-3 py-3 text-center font-bold ${esIngreso ? 'text-emerald-700' : 'text-red-600'}">${esIngreso ? '+' : '-'}${cant} pzas</td>
                         <td class="px-3 py-3 text-center space-x-1">
+                            <button onclick="reimprimirOrden('${m.id}')" title="Reimprimir Orden" class="text-capex hover:text-capex-dark p-1"><i class="fa-solid fa-print"></i></button>
                             <button onclick="abrirModalEditar('${m.id}')" title="Editar" class="text-blue-600 hover:text-blue-800 p-1"><i class="fa-solid fa-pen-to-square"></i></button>
                             <button onclick="eliminarRegistro('${m.id}')" title="Eliminar" class="text-red-500 hover:text-red-700 p-1"><i class="fa-solid fa-trash"></i></button>
                         </td>
@@ -1997,3 +2040,4 @@
     </script>
 </body>
 </html>
+```[cite: 1]
