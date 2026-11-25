@@ -34,12 +34,14 @@
             body { background: white; font-size: 11pt; }
             
             #seccion-orden-impresion, 
-            #seccion-reporte-impresion { 
+            #seccion-reporte-impresion,
+            #seccion-stock-clave-impresion { 
                 display: none !important; 
             }
 
             #seccion-orden-impresion.active-print, 
-            #seccion-reporte-impresion.active-print { 
+            #seccion-reporte-impresion.active-print,
+            #seccion-stock-clave-impresion.active-print { 
                 display: block !important; 
             }
         }
@@ -133,9 +135,14 @@
                 </div>
 
                 <div class="bg-white p-5 rounded-lg shadow border-t-2 border-capex">
-                    <h2 class="text-lg font-bold text-capex-dark mb-4 flex justify-between items-center">
+                    <h2 class="text-lg font-bold text-capex-dark mb-4 flex justify-between items-center gap-2">
                         <span><i class="fa-solid fa-barcode text-capex mr-2"></i>Stock por Clave (Almacén 4)</span>
-                        <span class="text-xs bg-capex-soft text-capex px-2 py-1 rounded">Haz clic en la clave para ver su historial</span>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs bg-capex-soft text-capex px-2 py-1 rounded">Clic en clave = historial</span>
+                            <button type="button" onclick="imprimirStockPorClave('hojas')" class="px-2.5 py-1 bg-capex hover:bg-capex-dark text-white text-xs font-semibold rounded shadow transition">
+                                <i class="fa-solid fa-print mr-1"></i>Imprimir
+                            </button>
+                        </div>
                     </h2>
                     <div class="overflow-y-auto max-h-72">
                         <table class="w-full text-sm text-left text-gray-500">
@@ -259,9 +266,14 @@
                 </div>
 
                 <div class="bg-white p-5 rounded-lg shadow border-t-2 border-amber-600">
-                    <h2 class="text-lg font-bold text-capex-dark mb-4 flex justify-between items-center">
+                    <h2 class="text-lg font-bold text-capex-dark mb-4 flex justify-between items-center gap-2">
                         <span><i class="fa-solid fa-barcode text-amber-600 mr-2"></i>Stock por Clave</span>
-                        <span class="text-xs bg-amber-50 text-amber-800 px-2 py-1 rounded font-semibold">Haz clic para ver historial</span>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs bg-amber-50 text-amber-800 px-2 py-1 rounded font-semibold">Clic = historial</span>
+                            <button type="button" onclick="imprimirStockPorClave('puertas')" class="px-2.5 py-1 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded shadow transition">
+                                <i class="fa-solid fa-print mr-1"></i>Imprimir
+                            </button>
+                        </div>
                     </h2>
                     <div class="overflow-y-auto max-h-72">
                         <table class="w-full text-sm text-left text-gray-500">
@@ -763,6 +775,46 @@
         </div>
     </div>
 
+    <!-- IMPRESIÓN STOCK POR CLAVE (ALMACÉN 4) -->
+    <div id="seccion-stock-clave-impresion" class="hidden bg-white p-6 max-w-4xl mx-auto">
+        <div class="border-b-2 border-capex pb-3 mb-4 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <svg class="h-8 w-auto text-capex-dark" viewBox="0 0 320 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="2" y="2" width="45" height="76" stroke="#3B4B44" stroke-width="3" fill="none"/>
+                    <path d="M12 10 Q 25 35 12 70" stroke="#3B4B44" stroke-width="2" fill="none"/>
+                    <path d="M22 10 Q 38 30 22 70" stroke="#3B4B44" stroke-width="2" fill="none"/>
+                    <path d="M32 10 Q 45 40 32 70" stroke="#3B4B44" stroke-width="2" fill="none"/>
+                    <text x="60" y="52" fill="#3B4B44" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="44" letter-spacing="2">CAPEX</text>
+                    <text x="62" y="70" fill="#4E6158" font-family="Arial, Helvetica, sans-serif" font-weight="bold" font-size="14" letter-spacing="0.5">Puertas de madera</text>
+                </svg>
+                <div>
+                    <h1 class="text-lg font-bold text-capex-dark" id="print-stock-titulo">STOCK POR CLAVE - ALMACÉN 4 (ORDEN ALFABÉTICO)</h1>
+                    <p class="text-xs text-gray-600" id="print-stock-subtitulo">CAPEX Puertas de Madera - Catálogo Completo Almacén 4</p>
+                </div>
+            </div>
+            <div class="text-right text-xs text-gray-500">
+                <p>Fecha Emisión: <span id="print-stock-fecha" class="font-bold text-gray-700"></span></p>
+                <p>Total Claves: <span id="print-stock-total-claves" class="font-bold text-gray-700">0</span></p>
+            </div>
+        </div>
+
+        <table class="w-full border-collapse border border-gray-300 text-xs mb-4">
+            <thead>
+                <tr class="bg-gray-200 text-capex-dark font-bold">
+                    <th class="border border-gray-300 px-2 py-2 text-left">Clave</th>
+                    <th class="border border-gray-300 px-2 py-2 text-left">Descripción</th>
+                    <th class="border border-gray-300 px-2 py-2 text-right">Stock Actual</th>
+                </tr>
+            </thead>
+            <tbody id="tabla-print-stock-clave-body"></tbody>
+        </table>
+
+        <div class="flex justify-between items-center border-t pt-2 text-xs text-gray-600">
+            <p>CAPEX Puertas de Madera - Almacén 4</p>
+            <p>Firma Responsable: ______________________</p>
+        </div>
+    </div>
+
     <script>
         // CONFIGURACIÓN DE SUPABASE
         const SUPABASE_URL = "https://ncmzdsmuclckujsnkzdx.supabase.co"; 
@@ -832,6 +884,15 @@
 
         function obtenerCatalogo(categoria) {
             return categoria === 'Puerta' ? CATALOGO_PUERTAS : CATALOGO_HOJAS;
+        }
+
+        function obtenerClavesOrdenadasCompletas(categoria, dataset) {
+            const catalogo = obtenerCatalogo(categoria);
+            const clavesSet = new Set([
+                ...Object.keys(catalogo),
+                ...dataset.map(m => m.clave).filter(Boolean)
+            ]);
+            return [...clavesSet].sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
         }
 
         function actualizarOpcionesClaves(tipoFormulario) {
@@ -1066,6 +1127,8 @@
                 actualizarDashboards();
             } catch (err) {
                 console.error("Error al cargar movimientos desde Supabase:", err.message);
+                generarFoliosConsecutivos();
+                actualizarDashboards();
             }
         }
 
@@ -1698,18 +1761,18 @@
                     });
                 }
 
-                const clavesSet = new Set(dataset.map(m => m.clave).filter(Boolean));
+                const clavesOrdenadasHojas = obtenerClavesOrdenadasCompletas('Hoja', dataset);
                 const tablaStock = document.getElementById('tabla-dashboard-stock');
                 tablaStock.innerHTML = '';
 
-                if (clavesSet.size === 0) {
+                if (clavesOrdenadasHojas.length === 0) {
                     tablaStock.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-gray-400">Sin claves registradas</td></tr>`;
                 } else {
-                    clavesSet.forEach(clave => {
+                    clavesOrdenadasHojas.forEach(clave => {
                         const ing = ingresos.filter(m => m.clave === clave).reduce((s, m) => s + Number(m.cantidad || 0), 0);
                         const sal = salidas.filter(m => m.clave === clave).reduce((s, m) => s + Number(m.cantidad || 0), 0);
                         const stockClave = ing - sal;
-                        const itemRef = dataset.find(m => m.clave === clave) || {};
+                        const itemRef = dataset.find(m => m.clave === clave) || CATALOGO_HOJAS[clave] || {};
 
                         const tr = document.createElement('tr');
                         tr.className = "border-b hover:bg-blue-50 cursor-pointer transition";
@@ -1718,7 +1781,7 @@
                             <td class="px-3 py-2 font-mono font-bold text-blue-600 underline">${clave} <span class="block text-xs font-normal text-gray-500">${itemRef.descripcion || ''}</span></td>
                             <td class="px-3 py-2 text-center text-emerald-600 font-medium">+${ing}</td>
                             <td class="px-3 py-2 text-center text-red-600 font-medium">-${sal}</td>
-                            <td class="px-3 py-2 text-right font-bold ${stockClave > 0 ? 'text-gray-900' : 'text-red-500'}">${stockClave} pzas</td>
+                            <td class="px-3 py-2 text-right font-bold ${stockClave > 0 ? 'text-gray-900' : (stockClave < 0 ? 'text-red-500' : 'text-gray-500')}">${stockClave} pzas</td>
                         `;
                         tablaStock.appendChild(tr);
                     });
@@ -1727,11 +1790,11 @@
                 const tablaModelosHojas = document.getElementById('tabla-dashboard-modelos-hojas');
                 tablaModelosHojas.innerHTML = '';
 
-                if (clavesSet.size === 0) {
+                if (clavesOrdenadasHojas.length === 0) {
                     tablaModelosHojas.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-gray-400">Sin registros para desglosar</td></tr>`;
                 } else {
-                    clavesSet.forEach(clave => {
-                        const itemRef = dataset.find(m => m.clave === clave) || {};
+                    clavesOrdenadasHojas.forEach(clave => {
+                        const itemRef = dataset.find(m => m.clave === clave) || CATALOGO_HOJAS[clave] || {};
                         let recupClave = 0;
                         let scrapClave = 0;
 
@@ -1805,13 +1868,13 @@
                     });
                 }
 
-                const clavesSet = new Set(dataset.map(m => m.clave).filter(Boolean));
+                const clavesOrdenadasPuertas = obtenerClavesOrdenadasCompletas('Puerta', dataset);
                 const tablaClave = document.getElementById('tabla-dashboard-puertas-clave');
                 tablaClave.innerHTML = '';
-                if (clavesSet.size === 0) {
+                if (clavesOrdenadasPuertas.length === 0) {
                     tablaClave.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-gray-400">Sin claves</td></tr>`;
                 } else {
-                    clavesSet.forEach(clav => {
+                    clavesOrdenadasPuertas.forEach(clav => {
                         const ing = ingresos.filter(m => m.clave === clav).reduce((s, m) => s + Number(m.cantidad || 0), 0);
                         const sal = salidas.filter(m => m.clave === clav).reduce((s, m) => s + Number(m.cantidad || 0), 0);
                         tablaClave.innerHTML += `
@@ -1827,6 +1890,72 @@
 
                 actualizarGraficoSalidas(salidas, 'graficoPuertasSalidas', 'Puerta');
             }
+        }
+
+        function imprimirStockPorClave(tipo = 'hojas') {
+            const esPuerta = tipo === 'puertas';
+            const categoriaFiltro = esPuerta ? 'Puerta' : 'Hoja';
+            const dataset = movimientos.filter(m =>
+                esPuerta ? m.categoria === 'Puerta' : (!m.categoria || m.categoria === 'Hoja')
+            );
+
+            const ingresos = dataset.filter(m => m.tipo === 'INGRESO');
+            const salidas = dataset.filter(m => m.tipo === 'SALIDA');
+            const catalogo = obtenerCatalogo(categoriaFiltro);
+            const clavesOrdenadas = obtenerClavesOrdenadasCompletas(categoriaFiltro, dataset);
+
+            if (clavesOrdenadas.length === 0) {
+                alert("No hay claves registradas en el catálogo para imprimir.");
+                return;
+            }
+
+            document.getElementById('print-stock-titulo').innerText = esPuerta
+                ? 'STOCK DE PUERTAS POR CLAVE - ALMACÉN 4 (ORDEN ALFABÉTICO)'
+                : 'STOCK DE HOJAS POR CLAVE - ALMACÉN 4 (ORDEN ALFABÉTICO)';
+            document.getElementById('print-stock-subtitulo').innerText = esPuerta
+                ? 'CAPEX Puertas de Madera - Todas las Claves de Puertas (Almacén 4)'
+                : 'CAPEX Puertas de Madera - Todas las Claves de Hojas (Almacén 4)';
+            document.getElementById('print-stock-fecha').innerText = new Date().toLocaleDateString();
+            document.getElementById('print-stock-total-claves').innerText = clavesOrdenadas.length;
+
+            const tbody = document.getElementById('tabla-print-stock-clave-body');
+            tbody.innerHTML = '';
+
+            let totalStock = 0;
+
+            clavesOrdenadas.forEach(clave => {
+                const ing = ingresos.filter(m => m.clave === clave).reduce((s, m) => s + Number(m.cantidad || 0), 0);
+                const sal = salidas.filter(m => m.clave === clave).reduce((s, m) => s + Number(m.cantidad || 0), 0);
+                const stock = ing - sal;
+                const itemRef = dataset.find(m => m.clave === clave) || catalogo[clave] || {};
+
+                totalStock += stock;
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="border border-gray-300 px-2 py-1.5 font-mono font-bold">${clave}</td>
+                    <td class="border border-gray-300 px-2 py-1.5">${itemRef.descripcion || ''}</td>
+                    <td class="border border-gray-300 px-2 py-1.5 text-right font-bold ${stock === 0 ? 'text-gray-500' : ''}">${stock} pzas</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            const trTotal = document.createElement('tr');
+            trTotal.className = "bg-gray-100 font-bold";
+            trTotal.innerHTML = `
+                <td colspan="2" class="border border-gray-300 px-2 py-1.5 text-right">STOCK TOTAL ACTUAL:</td>
+                <td class="border border-gray-300 px-2 py-1.5 text-right">${totalStock} pzas</td>
+            `;
+            tbody.appendChild(trTotal);
+
+            const seccion = document.getElementById('seccion-stock-clave-impresion');
+            seccion.classList.remove('hidden');
+            seccion.classList.add('active-print');
+
+            window.print();
+
+            seccion.classList.remove('active-print');
+            seccion.classList.add('hidden');
         }
 
         function toggleDetalleMedida(medida) {
@@ -2040,4 +2169,3 @@
     </script>
 </body>
 </html>
-```[cite: 1]
